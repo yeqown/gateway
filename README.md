@@ -11,3 +11,9 @@ api gateway for golang http server
 * Cache Pool
 * Support expansion
 * Configurable proxy rule
+
+# Refs:
+
+* [https://github.com/Kong/kong](https://github.com/Kong/kong)
+* [https://github.com/TykTechnologies/tyk](https://github.com/TykTechnologies/tyk)
+* [https://github.com/DocsHome/microservices](https://github.com/DocsHome/microservices)
