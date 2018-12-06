@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -65,15 +64,8 @@ func (e *Engine) ListenAndServe(addr string) error {
 	e.init()
 
 	mux := http.NewServeMux()
-	pageMux := http.NewServeMux()
 
-	pageMux.HandleFunc("/p1", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "this is p1")
-		return
-	})
-
-	mux.Handle("/page", pageMux)
+	mux.Handle(webPrefix, HTMLSrv)
 	mux.Handle(e.Prefix, http.TimeoutHandler(e, 5*time.Second, "timeout"))
 
 	e.Logger.WithFields(map[string]interface{}{

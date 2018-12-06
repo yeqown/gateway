@@ -52,7 +52,7 @@ func main() {
 			httpLogger,
 			proxyPlg,
 		},
-		Prefix: "/api/",
+		Prefix: "/proxy/",
 	}
 
 	if err := eng.ListenAndServe(":8989"); err != nil {
