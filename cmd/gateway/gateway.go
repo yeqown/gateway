@@ -17,7 +17,7 @@ import (
 func main() {
 	logger.InitLogger("./logs")
 
-	proxyPlg := proxy.New([]proxy.Config{
+	plgProxy := proxy.New([]proxy.Config{
 		proxy.Config{
 			Path:   "/gw/srv1",
 			Method: http.MethodGet,
@@ -44,13 +44,13 @@ func main() {
 		},
 	})
 
-	httpLogger := httplog.New(logger.Logger)
+	plgHTTPLogger := httplog.New(logger.Logger)
 
 	eng := &gateway.Engine{
 		Logger: logger.Logger,
 		Plugins: []plugin.Plugin{
-			httpLogger,
-			proxyPlg,
+			plgHTTPLogger,
+			plgProxy,
 		},
 		Prefix: "/proxy/",
 	}

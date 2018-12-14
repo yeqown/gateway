@@ -8,6 +8,8 @@ import (
 	"github.com/yeqown/gateway"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
+	"github.com/yeqown/gateway/plugin/cache"
+	"github.com/yeqown/gateway/plugin/cache/presistence"
 	"github.com/yeqown/gateway/plugin/httplog"
 	"github.com/yeqown/gateway/plugin/proxy"
 )
@@ -17,13 +19,13 @@ import (
 func main() {
 	logger.InitLogger("./logs")
 
-	proxyPlg := proxy.New([]proxy.Config{
+	plgProxy := proxy.New([]proxy.Config{
 		proxy.Config{
 			Path:   "/gw/srv1",
 			Method: http.MethodGet,
 			Servers: []proxy.Server{
 				{
-					Addr:   "http://localhost:8w081",
+					Addr:   "http://localhost:8081",
 					Weight: 2,
 				},
 			},
@@ -44,13 +46,15 @@ func main() {
 		},
 	})
 
-	httpLogger := httplog.New(logger.Logger)
+	plgHTTPLogger := httplog.New(logger.Logger)
+	plgCache := cache.New(presistence.NewInMemoryStore())
 
 	eng := &gateway.Engine{
 		Logger: logger.Logger,
 		Plugins: []plugin.Plugin{
-			httpLogger,
-			proxyPlg,
+			plgHTTPLogger,
+			plgCache,
+			plgProxy,
 		},
 	}
 

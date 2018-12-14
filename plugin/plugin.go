@@ -102,7 +102,7 @@ func (c *Context) Set(req *http.Request, w http.ResponseWriter) {
 	c.pluginIdx = -1
 }
 
-// Reset ...
+// Reset ... donot call this manually
 func (c *Context) Reset() {
 	c.req = nil
 	c.w = nil
