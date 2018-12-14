@@ -14,18 +14,28 @@ import (
 // New func: generate a new HTTPLogger
 func New(logger *log.Logger) *HTTPLogger {
 	return &HTTPLogger{
-		logger: logger,
+		logger:      logger,
+		logResponse: true,
 	}
 }
 
 // HTTPLogger ...
 type HTTPLogger struct {
+	// log.Logger is writer to log
 	logger *log.Logger
+	// logResponse to log response into file or not
+	logResponse bool
 }
 
 // Handle ...
 func (h *HTTPLogger) Handle(ctx *plugin.Context) {
-	rbw := &respBodyWriter{
+	defer plugin.Recover("HTTPLogger")
+
+	var (
+		rbw *respBodyWriter
+	)
+	// to log response
+	rbw = &respBodyWriter{
 		body:           bytes.NewBufferString(""),
 		ResponseWriter: ctx.ResponseWriter(),
 	}
@@ -43,8 +53,13 @@ func (h *HTTPLogger) Handle(ctx *plugin.Context) {
 	end := time.Now()
 	latency := end.Sub(start)
 	clientIP := ctx.Request().RemoteAddr
-	fields["requestForm"] = utils.ParseRequestForm(cpyReq) // set request
-	fields["responseBody"] = rbw.body.String()             // set response
+	// set request
+	fields["requestForm"] = utils.ParseRequestForm(cpyReq)
+	// need to log response
+	if h.logResponse {
+		// set response
+		fields["responseBody"] = rbw.body.String()
+	}
 
 	// log
 	h.logger.WithFields(fields).Infof("[Request] %v |%3d| %13v | %15s |%-7s %s",
@@ -57,6 +72,7 @@ func (h *HTTPLogger) Handle(ctx *plugin.Context) {
 	)
 }
 
+// type respBodyWriter to write log ...
 type respBodyWriter struct {
 	http.ResponseWriter
 	status int

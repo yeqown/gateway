@@ -40,6 +40,8 @@ type Proxy struct {
 
 // Handle ... proxy to handle with request ...
 func (p *Proxy) Handle(c *plugin.Context) {
+	defer plugin.Recover("Proxy")
+
 	handle, params, tsr := p.router.Lookup(c.Method, c.Path)
 	_, _ = params, tsr
 
