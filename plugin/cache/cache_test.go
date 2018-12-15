@@ -38,3 +38,80 @@ func Test_responseCache_Encode_Decode(t *testing.T) {
 func Test_cachedWriter(t *testing.T) {
 	var _ http.ResponseWriter = cachedWriter{}
 }
+
+func Test_urlEscape(t *testing.T) {
+	type args struct {
+		prefix string
+		u      string
+		extern []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "case 1",
+			args: args{
+				prefix: CachePluginKey,
+				u:      "http://api.baidu.com/account/open/profile",
+				extern: []string{"0xe17basu12v13"},
+			},
+			want: "plugin.cache:http%3A%2F%2Fapi.baidu.com%2Faccount%2Fopen%2Fprofile:0xe17basu12v13",
+		},
+		{
+			name: "case 1",
+			args: args{
+				prefix: CachePluginKey,
+				u:      "http://api.baidu.com/account/open/profile",
+				extern: []string{},
+			},
+			want: "plugin.cache:http%3A%2F%2Fapi.baidu.com%2Faccount%2Fopen%2Fprofile",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := urlEscape(tt.args.prefix, tt.args.u, tt.args.extern...); got != tt.want {
+				t.Errorf("urlEscape() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_generateKey(t *testing.T) {
+	getReq, _ := http.NewRequest("GET", "https://baidu.com/api/account/profile?account=123123123123", nil)
+
+	type args struct {
+		req           *http.Request
+		serializeForm bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "case 1",
+			args: args{
+				req:           getReq,
+				serializeForm: false,
+			},
+			want: "plugin.cache:%2Fapi%2Faccount%2Fprofile%3Faccount%3D123123123123",
+		},
+		{
+			name: "case 1",
+			args: args{
+				req:           getReq,
+				serializeForm: true,
+			},
+			want: "plugin.cache:%2Fapi%2Faccount%2Fprofile%3Faccount%3D123123123123:6163636f756e743d313233313233313233313233",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := generateKey(tt.args.req, tt.args.serializeForm); got != tt.want {
+				t.Errorf("generateKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

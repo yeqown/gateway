@@ -7,11 +7,16 @@ import (
 	"github.com/yeqown/gateway"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
+	"github.com/yeqown/gateway/plugin/cache"
+	"github.com/yeqown/gateway/plugin/cache/presistence"
 	"github.com/yeqown/gateway/plugin/httplog"
 	"github.com/yeqown/gateway/plugin/proxy"
 )
 
-var c proxy.Config
+var (
+	c            proxy.Config
+	nocacheRules []cache.Rule
+)
 
 func init() {
 	c = proxy.Config{
@@ -83,6 +88,12 @@ func init() {
 			},
 		},
 	}
+
+	nocacheRules = []cache.Rule{
+		cache.Rule{
+			Regular: "^/gw/id$",
+		},
+	}
 }
 
 // main will do some initalize work and
@@ -93,13 +104,13 @@ func main() {
 	// initial plugins
 	plgProxy := proxy.New(&c)
 	plgHTTPLogger := httplog.New(logger.Logger)
-	// plgCache := cache.New(presistence.NewInMemoryStore())
+	plgCache := cache.New(presistence.NewInMemoryStore(), nocacheRules)
 
 	eng := &gateway.Engine{
 		Logger: logger.Logger,
 		Plugins: []plugin.Plugin{
 			plgHTTPLogger,
-			// plgCache,
+			plgCache,
 			plgProxy,
 		},
 	}

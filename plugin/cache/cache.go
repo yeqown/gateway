@@ -4,14 +4,19 @@ package cache
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache/presistence"
+	"github.com/yeqown/gateway/utils"
 )
 
 const (
@@ -22,8 +27,10 @@ const (
 )
 
 // New PluginStore ...
-func New(store presistence.Store) *PluginStore {
-	return &PluginStore{
+func New(store presistence.Store, rules []Rule) *Cache {
+	initRules(rules)
+
+	return &Cache{
 		store:         store,
 		serializeForm: false,
 	}
@@ -116,17 +123,45 @@ func (w cachedWriter) Write(data []byte) (int, error) {
 	return ret, err
 }
 
-// PluginStore to serve page cache ...
-type PluginStore struct {
+// Cache to serve page cache ...
+type Cache struct {
 	// store interface with value
 	store presistence.Store
 	// serialize form [query and post form]
 	serializeForm bool
 }
 
-// TODO: support query and postform
-func (p *PluginStore) generateKey(uri string) string {
-	return uri
+// generate a key with the given http.Request and serializeForm flag
+func generateKey(req *http.Request, serializeForm bool) string {
+	var (
+		cpyReq     *http.Request
+		formEncode string
+	)
+	if serializeForm {
+		cpyReq = utils.CopyRequest(req)
+		formEncode = utils.EncodeFormToString(cpyReq)
+		return urlEscape(CachePluginKey, req.URL.RequestURI(), formEncode)
+	}
+
+	return urlEscape(CachePluginKey, req.URL.RequestURI())
+}
+
+func urlEscape(prefix, u string, extern ...string) string {
+	key := url.QueryEscape(u)
+	if len(key) > 200 {
+		h := sha1.New()
+		io.WriteString(h, u)
+		key = string(h.Sum(nil))
+	}
+	var buffer bytes.Buffer
+	buffer.WriteString(prefix)
+	buffer.WriteString(":")
+	buffer.WriteString(key)
+	for _, s := range extern {
+		buffer.WriteString(":")
+		buffer.WriteString(s)
+	}
+	return buffer.String()
 }
 
 // func (p *PluginStore) parseValue() []byte {
@@ -135,13 +170,20 @@ func (p *PluginStore) generateKey(uri string) string {
 
 // Handle implement the interface Plugin
 // [fixed] TOFIX: cannot set cache to response
-func (p *PluginStore) Handle(ctx *plugin.Context) {
-	defer plugin.Recover("PluginStore")
+func (c *Cache) Handle(ctx *plugin.Context) {
+	defer plugin.Recover("Cache")
 
-	key := p.generateKey(ctx.Path)
-	// value := p.parseValue()
-	if p.store.Exists(key) {
-		byts, err := p.store.Get(key)
+	if matchNoCacheRule(ctx.Path) {
+		logger.Logger.Infof("plugin.Cache cannot work with path: %s", ctx.Path)
+		return
+	}
+
+	logger.Logger.Info("plugin.Cache is working")
+	key := generateKey(ctx.Request(), c.serializeForm)
+	if c.store.Exists(key) {
+		// if exists key then load from cache and then
+		// write to http.ResponseWriter
+		byts, err := c.store.Get(key)
 		if err != nil {
 			ctx.SetError(err)
 			ctx.Abort(http.StatusInternalServerError,
@@ -177,7 +219,7 @@ func (p *PluginStore) Handle(ctx *plugin.Context) {
 	writer := cachedWriter{
 		ResponseWriter: ctx.ResponseWriter(),
 		cache:          &responseCache{},
-		store:          p.store,
+		store:          c.store,
 		status:         http.StatusOK,
 		key:            key,
 		expire:         presistence.DefaultExpire,
