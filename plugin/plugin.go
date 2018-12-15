@@ -133,3 +133,20 @@ func (c *Context) ResponseWriter() http.ResponseWriter {
 func (c *Context) SetResponseWriter(w http.ResponseWriter) {
 	c.w = w
 }
+
+// JSON ...
+func (c *Context) JSON(status int, v interface{}) {
+	byts, err := json.Marshal(v)
+	if err != nil {
+		c.SetError(err)
+		return
+	}
+	fmt.Fprintf(c.w, string(byts))
+	c.Abort(status, "")
+}
+
+// SString ...
+func (c *Context) SString(status int, s string) {
+	fmt.Fprintf(c.w, s)
+	c.Abort(status, "")
+}

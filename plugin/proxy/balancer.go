@@ -1,7 +1,7 @@
 package proxy
 
-// ServerCfg ...
-type ServerCfg interface {
+// ServerCfgInterface ...
+type ServerCfgInterface interface {
 	// W means weight
 	W() int
 }
@@ -18,7 +18,7 @@ type Balancer struct {
 
 // NewBalancer ... 初始化调度器
 // Notice: https://github.com/golang/go/wiki/InterfaceSlice
-func NewBalancer(servers []ServerCfg) *Balancer {
+func NewBalancer(servers []ServerCfgInterface) *Balancer {
 	bla := &Balancer{
 		serverWeights: make(map[int]int),
 		maxWeight:     0,

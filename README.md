@@ -1,69 +1,57 @@
-# api-gateway
-api gateway for golang http server
+# gateway
 
-# Todos
+api gateway for golang http server.
 
-###* Permission Manager
-	Internal RBAC modules
+## Todos
 
-###* Load Balance
-	ignore this
+- [x] HTTP reverse proxy 
+- [x] HTTP Cache, support URI with query param and post form
+- [] Expansion, support leader node and slave
+- [] Permission, RBAC mode
+- [] Ratelimit, token bucket alg
 
-###* Request Limit
-	limitation rules as following:
-	1. Request as spider
-	2. IP addr in black list
-	3. Request with token (what token? )
+## JSON Config file
 
-###* HTTP Proxy
-	with the config file `config.proxy.json` to redirect request to microserver.
-	and do some assemble works with differrent microserver. this can be config by the file or
-	do this config with an api that is servered by the `github.com/yeqown/gateway`?
-
-###* RPC Caller
-	ignore this tmeporarily
-
-###* Cache Pool
-	to cache what? or this is just a functional module?
-
-###* Support expansion
-	how to design this `github.com/yeqown/gateway` in `master -> slave-node` mode, so I can expand `github.com/yeqown/gateway` easily ?
-
-###* Configurable proxy rule
-	must be support file or api method to config proxy or assemble microserver
-
-# Usage
-
-just run a binary file and do some condfig so you can just run it easily
-
-
-proxy config likes:
+just run a binary file and do some config so you can just run it easily. proxy config likes: `config.proxy.json`
 ```json
-# config.proxy.json
-
 {
-	"proxy": [
-		{
-			"listen_path": "/admin",
-			"target": "https://api.host.com",
-			"strip_listen_path": true			
-		},
-		{
-			"listen_path": "/health",
-			"target": "https://api.host.com",
-			"strip_listen_path": false	
-		}
-	]
+    "proxy": [
+        {
+            "path": "/admin",
+            "method": "GET",
+            "servers": [
+                {
+                    "addr": "127.0.0.1:8981/api/target/1",
+                    "weight": 5
+                },
+                {
+                    "addr": "127.0.0.1:8982/api/target/1",
+                    "weight": 5
+                }
+            ],
+            "combines": [
+                {
+                    "addr": "127.0.0.1:8981/api/target/1",
+                    "field": "field1",
+                    "method":"GET"
+                },
+                {
+                    "addr": "127.0.0.1:8981/api/target/2",
+                    "field": "field2",
+                    "method":"GET"
+                },
+            ],
+            "need_combine": true
+        },
+        // ....
+    ]
 }
 ```
 
-server config likes:
+server config likes: `github.com/yeqown/gateway.server.json`
 ```json
-# github.com/yeqown/gateway.server.json
-
 {
-	"host": "127.0.0.1",
-	"port": "9898"
+    "host": "127.0.0.1",
+    "port": "9898"
 }
 ```
-

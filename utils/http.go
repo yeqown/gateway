@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // CopyRequest copy request from a http.Request
@@ -37,4 +38,18 @@ func ParseRequestForm(cpyReq *http.Request) map[string]interface{} {
 		reqData[k] = v
 	}
 	return reqData
+}
+
+// ParseURIPrefix ...
+// 1. prefix/uri; 2 /prefix/uri
+func ParseURIPrefix(uri string) string {
+	slices := strings.Split(uri, "/")
+	if len(slices) < 2 {
+		return "/nonePrefix"
+	}
+	// uri start with "/"
+	if uri[0] == '/' {
+		return strings.Join(slices[:2], "/")
+	}
+	return "/" + slices[0]
 }
