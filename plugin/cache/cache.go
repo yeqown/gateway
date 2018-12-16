@@ -37,7 +37,6 @@ func New(store presistence.Store, rules []Rule) *Cache {
 }
 
 // responseCache to save cache of one URI
-// TODO: post method URI need to be cached or not? serialize the form with URI can solve this?
 type responseCache struct {
 	// http
 	Header http.Header
@@ -86,12 +85,15 @@ type cachedWriter struct {
 	expire time.Duration
 }
 
-func (w cachedWriter) Header() http.Header { return w.ResponseWriter.Header() }
+func (w cachedWriter) Header() http.Header {
+	return w.ResponseWriter.Header()
+}
+
 func (w cachedWriter) WriteHeader(status int) {
-	// println("calling WriteHeader", status)
 	w.status = status
 	w.ResponseWriter.WriteHeader(status)
 }
+
 func (w cachedWriter) Write(data []byte) (int, error) {
 	ret, err := w.ResponseWriter.Write(data)
 	if err != nil {
@@ -101,15 +103,8 @@ func (w cachedWriter) Write(data []byte) (int, error) {
 	w.cache.Status = w.status
 	w.cache.Header = w.Header()
 	w.cache.Data = append(w.cache.Data, data...)
-	// if byts, err := w.store.Get(w.key); err == nil {
-	// 	w.cache.Data = append(w.cache.Data, byts...)
-	// 	// fill cache other field
-	// 	w.cache.Status = w.status
-	// 	w.cache.Header = w.Header()
-	// } else {
-	// 	log.Printf("plugin.Cache Get err: %v", err)
-	// }
 
+	// only save into store while statusCode is successful
 	if w.status < 300 {
 		value, err := encodeCache(w.cache)
 		if err != nil {
@@ -132,6 +127,7 @@ type Cache struct {
 }
 
 // generate a key with the given http.Request and serializeForm flag
+// [done] TODO: post method URI need to be cached or not? serialize the form with URI can solve this?
 func generateKey(req *http.Request, serializeForm bool) string {
 	var (
 		cpyReq     *http.Request
@@ -164,10 +160,6 @@ func urlEscape(prefix, u string, extern ...string) string {
 	return buffer.String()
 }
 
-// func (p *PluginStore) parseValue() []byte {
-// 	return []byte("hello cache")
-// }
-
 // Handle implement the interface Plugin
 // [fixed] TOFIX: cannot set cache to response
 func (c *Cache) Handle(ctx *plugin.Context) {
@@ -185,18 +177,16 @@ func (c *Cache) Handle(ctx *plugin.Context) {
 		// write to http.ResponseWriter
 		byts, err := c.store.Get(key)
 		if err != nil {
-			ctx.SetError(err)
-			ctx.Abort(http.StatusInternalServerError,
-				fmt.Sprintf("plugin.cache Get cache err: %v", err))
+			ctx.SetError(fmt.Errorf("plugin.cache Get cache err: %v", err))
+			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
 		// decode into cache
 		cache, err := decodeToCache(byts)
 		if err != nil || cache.Status == 0 {
-			ctx.SetError(err)
-			ctx.Abort(http.StatusInternalServerError,
-				fmt.Sprintf("plugin.cache decode cache err: %v", err))
+			ctx.SetError(fmt.Errorf("plugin.cache decode cache err: %v", err))
+			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 
@@ -210,7 +200,7 @@ func (c *Cache) Handle(ctx *plugin.Context) {
 				ctx.ResponseWriter().Header().Set(k, v)
 			}
 		}
-		ctx.Abort(http.StatusOK, "")
+		ctx.AbortWithStatus(http.StatusOK)
 		return
 	}
 

@@ -83,15 +83,18 @@ func (p *Proxy) Handle(c *plugin.Context) {
 			return
 		}
 		// don't matched path and server neither
-		errmsg := utils.Fstring("Request Not Found. (method: %s, URI: %s)", c.Method, c.Path)
-		c.Abort(http.StatusNotFound, errmsg)
+		c.SetError(fmt.Errorf("Request Not Found. (method: %s, URI: %s)",
+			c.Method, c.Path))
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	// callReverseURI
 	pathRule := p.pathRulesMap[c.Path]
 	if err := p.callReverseURI(pathRule, c); err != nil {
-		c.Abort(http.StatusInternalServerError, err.Error())
+		c.SetError(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		// c.Abort(http.StatusInternalServerError, err.Error())
 		return
 	}
 }

@@ -18,6 +18,8 @@ type Rule struct {
 	Regular string `json:"regular"`
 }
 
+// no cache rule settings, if the URI macthed any rule in rules
+// then abort cache plugin processing
 func initRules(rules []Rule) {
 	regexps = make([]*regexp.Regexp, len(rules))
 	for idx, rule := range rules {

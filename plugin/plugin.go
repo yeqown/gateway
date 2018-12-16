@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/yeqown/gateway/utils"
 )
 
 // Plugin type Plugin want to save all plugin
@@ -53,15 +51,15 @@ type Context struct {
 
 // Next ...
 func (c *Context) Next() {
-	// handle aborrted
-	if c.aborted {
+	// handle err happend
+	if c.err != nil {
+		c.String(http.StatusInternalServerError,
+			fmt.Errorf("could not handle with request, err: %v", c.err).Error())
 		return
 	}
 
-	// handle err happend
-	if c.err != nil {
-		c.Abort(http.StatusInternalServerError,
-			fmt.Errorf("could not handle with request, err: %v", c.err).Error())
+	// handle aborrted
+	if c.aborted {
 		return
 	}
 
@@ -75,19 +73,16 @@ func (c *Context) Next() {
 	c.Next()
 }
 
-// Abort ...
-func (c *Context) Abort(status int, msg string) {
+// Abort process to stop calling next plugin
+// [done] TODO: ignore response here, should call JSON, or String manually
+func (c *Context) Abort() {
+	c.aborted = true
+}
+
+// AbortWithStatus abort process and set response status
+func (c *Context) AbortWithStatus(status int) {
 	c.aborted = true
 	c.w.WriteHeader(status)
-
-	// json
-	if json.Valid([]byte(msg)) {
-		utils.ResponseJSON(c.w, msg)
-		return
-	}
-
-	// normal string
-	utils.ResponseString(c.w, msg)
 }
 
 // Aborted ...
@@ -95,7 +90,7 @@ func (c *Context) Aborted() bool {
 	return c.aborted
 }
 
-// Set ...
+// Set set request and  responseWriter
 func (c *Context) Set(req *http.Request, w http.ResponseWriter) {
 	c.req = req
 	c.w = w
@@ -109,7 +104,7 @@ func (c *Context) Reset() {
 	c.pluginIdx = -1
 }
 
-// Error
+// Error get the global error of context
 func (c *Context) Error() error {
 	return c.err
 }
@@ -139,14 +134,19 @@ func (c *Context) JSON(status int, v interface{}) {
 	byts, err := json.Marshal(v)
 	if err != nil {
 		c.SetError(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	fmt.Fprintf(c.w, string(byts))
-	c.Abort(status, "")
+	c.AbortWithStatus(status)
+	// c.w.WriteHeader(status)
+	// c.Abort()
 }
 
-// SString ...
-func (c *Context) SString(status int, s string) {
+// String ...
+func (c *Context) String(status int, s string) {
 	fmt.Fprintf(c.w, s)
-	c.Abort(status, "")
+	// c.w.WriteHeader(status)
+	// c.Abort()
+	c.AbortWithStatus(status)
 }
