@@ -18,3 +18,4 @@
 logs/
 /testdata/
 vendor/
+cmd/*
