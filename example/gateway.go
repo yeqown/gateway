@@ -11,6 +11,7 @@ import (
 	"github.com/yeqown/gateway/plugin/cache/presistence"
 	"github.com/yeqown/gateway/plugin/httplog"
 	"github.com/yeqown/gateway/plugin/proxy"
+	"github.com/yeqown/gateway/plugin/ratelimit"
 )
 
 var (
@@ -105,17 +106,19 @@ func main() {
 	plgProxy := proxy.New(&c)
 	plgHTTPLogger := httplog.New(logger.Logger)
 	plgCache := cache.New(presistence.NewInMemoryStore(), nocacheRules)
+	plgTokenBucket := ratelimit.New(10, 1)
 
 	eng := &gateway.Engine{
 		Logger: logger.Logger,
 		Plugins: []plugin.Plugin{
 			plgHTTPLogger,
+			plgTokenBucket,
 			plgCache,
 			plgProxy,
 		},
 	}
 
 	if err := eng.ListenAndServe(":8989"); err != nil {
-		log.Fatal(err)
+		log.Fatal(err
 	}
 }
