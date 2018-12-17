@@ -21,6 +21,7 @@ func New(w http.ResponseWriter, req *http.Request,
 	path := req.URL.Path
 
 	return &Context{
+		Ctx:       req.Context(),
 		Method:    method,
 		Path:      path,
 		numPlugin: numPlugin,
@@ -51,13 +52,6 @@ type Context struct {
 
 // Next ...
 func (c *Context) Next() {
-	// handle err happend
-	if c.err != nil {
-		c.String(http.StatusInternalServerError,
-			fmt.Errorf("could not handle with request, err: %v", c.err).Error())
-		return
-	}
-
 	// handle aborrted
 	if c.aborted {
 		return
@@ -112,6 +106,7 @@ func (c *Context) Error() error {
 // SetError ...
 func (c *Context) SetError(err error) {
 	c.err = err
+	c.String(http.StatusInternalServerError, err.Error())
 }
 
 // Request ...
@@ -138,15 +133,13 @@ func (c *Context) JSON(status int, v interface{}) {
 		return
 	}
 	fmt.Fprintf(c.w, string(byts))
+	c.w.Header().Set("Content-Type", "application/json")
 	c.AbortWithStatus(status)
-	// c.w.WriteHeader(status)
-	// c.Abort()
 }
 
 // String ...
 func (c *Context) String(status int, s string) {
 	fmt.Fprintf(c.w, s)
-	// c.w.WriteHeader(status)
-	// c.Abort()
+	c.w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	c.AbortWithStatus(status)
 }

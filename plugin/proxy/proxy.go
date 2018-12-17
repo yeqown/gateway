@@ -28,6 +28,8 @@ const (
 var (
 	// ErrBalancerNotMatched plugin.Proxy balancer not matched
 	ErrBalancerNotMatched = errors.New("plugin.Proxy balancer not matched")
+	// ErrPageNotFound can not found page
+	ErrPageNotFound = errors.New("404 Page Not Found")
 )
 
 func defaultHandleFunc(w http.ResponseWriter, req *http.Request, params httprouter.Params) {}
@@ -70,33 +72,46 @@ type Proxy struct {
 func (p *Proxy) Handle(c *plugin.Context) {
 	defer plugin.Recover("Proxy")
 
-	// single path reverse proxy
-	if handle, params, tsr := p.router.Lookup(c.Method, c.Path); handle == nil {
-		logger.Logger.Errorf("could not match path rules")
-		_, _ = params, tsr
-		//if don't match path rule then match server rules
-		pathPrefix := utils.ParseURIPrefix(c.Path)
-		pathPrefix = strings.ToLower(pathPrefix)
-		if srvRule, ok := p.srvRulesMap[pathPrefix]; ok {
-			// callReverseServer
-			p.callReverseServer(srvRule, c)
-			return
+	if p.matchedPathRule(c.Method, c.Path) {
+		// callReverseURI
+		logger.Logger.Info("matched path rules")
+		pathRule := p.pathRulesMap[c.Path]
+		if err := p.callReverseURI(pathRule, c); err != nil {
+			c.SetError(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
 		}
-		// don't matched path and server neither
-		c.SetError(fmt.Errorf("Request Not Found. (method: %s, URI: %s)",
-			c.Method, c.Path))
-		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	// callReverseURI
-	pathRule := p.pathRulesMap[c.Path]
-	if err := p.callReverseURI(pathRule, c); err != nil {
-		c.SetError(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		// c.Abort(http.StatusInternalServerError, err.Error())
+	if rule, ok := p.matchedServerRule(c.Path); ok {
+		// callReverseServer
+		logger.Logger.Info("matched server rules")
+		if err := p.callReverseServer(rule, c); err != nil {
+			c.SetError(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
 		return
 	}
+
+	// don't matched any path or server !!!
+	logger.Logger.Infof("could not match path or server rule !!! (method: %s, path: %s)",
+		c.Method, c.Path)
+	c.SetError(ErrPageNotFound)
+	c.AbortWithStatus(http.StatusNotFound)
+	return
+}
+
+func (p *Proxy) matchedPathRule(method, path string) bool {
+	handle, params, tsr := p.router.Lookup(method, path)
+	_, _ = params, tsr
+	return handle != nil
+}
+
+func (p *Proxy) matchedServerRule(path string) (ServerRule, bool) {
+	pathPrefix := utils.ParseURIPrefix(path)
+	pathPrefix = strings.ToLower(pathPrefix)
+	rule, ok := p.srvRulesMap[pathPrefix]
+	return rule, ok
 }
 
 // to load cfgs (type []proxy.ReverseServerCfg) to initial Proxy.Balancers
@@ -109,8 +124,10 @@ func (p *Proxy) loadBalancers(cfgs map[string][]ReverseServerCfg) {
 			if err != nil {
 				panic(utils.Fstring("could not parse URL: %s", srv.Addr))
 			}
+
 			// generate reverse proxy
 			reversePorxy := httputil.NewSingleHostReverseProxy(target)
+
 			// register a func for reverse proxy to handler error
 			reversePorxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 				utils.ResponseString(w, err.Error())

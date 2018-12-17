@@ -17,7 +17,7 @@ type Config struct {
 	ServerRules []ServerRule `json:"server_rules"`
 
 	// ReverseServerCfgs includes all reverse servers config
-	ReverseServerCfgs map[string][]ReverseServerCfg `json:"reverse_servers_cfgs"`
+	ReverseServerCfgs map[string][]ReverseServerCfg `json:"reverse_server_cfgs"`
 }
 
 // PathRule contains fields to appoint to reverse server and URL
@@ -35,7 +35,7 @@ type PathRule struct {
 	ServerName string `json:"server_name"`
 
 	// CombineReqCfgs combine request settings
-	CombineReqCfgs []CombineReqCfg `json:"combines"`
+	CombineReqCfgs []CombineReqCfg `json:"combine_req_cfgs"`
 
 	// need combine over two request result into one result
 	NeedCombine bool `json:"need_combine"`
@@ -43,9 +43,9 @@ type PathRule struct {
 
 // ServerRule ...
 type ServerRule struct {
-	Prefix          string
-	ServerName      string
-	NeedStripPrefix bool
+	Prefix          string `json:"prefix"`
+	ServerName      string `json:"server_name"`
+	NeedStripPrefix bool   `json:"need_strip_prefix"`
 }
 
 // ReverseServerCfg means proxy server config.

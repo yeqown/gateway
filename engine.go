@@ -53,13 +53,15 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx.Next()
 
 	// reset resource
-	ctx.Reset()
+	// ctx.Reset()
 	return
 }
 
 // ListenAndServe ...
 func (e *Engine) ListenAndServe(addr string) error {
-	e.addr = addr
+	if addr != "" {
+		e.addr = addr
+	}
 	e.init()
 
 	mux := http.NewServeMux()
@@ -71,5 +73,5 @@ func (e *Engine) ListenAndServe(addr string) error {
 		"prefix":     e.Prefix,
 	}).Info("start listening")
 
-	return http.ListenAndServe(addr, mux)
+	return http.ListenAndServe(e.addr, mux)
 }
