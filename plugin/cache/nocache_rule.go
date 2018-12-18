@@ -4,6 +4,8 @@ import (
 	"context"
 	"regexp"
 	"time"
+
+	"github.com/yeqown/gateway/config/rule"
 )
 
 // if the URI match rules then will not enable cache plugin
@@ -13,17 +15,12 @@ var (
 	cntRegexp int
 )
 
-// Rule ...
-type Rule struct {
-	Regular string `json:"regular"`
-}
-
 // no cache rule settings, if the URI macthed any rule in rules
 // then abort cache plugin processing
-func initRules(rules []Rule) {
+func initRules(rules []rule.Nocacher) {
 	regexps = make([]*regexp.Regexp, len(rules))
-	for idx, rule := range rules {
-		regexps[idx], _ = regexp.Compile(rule.Regular)
+	for idx, r := range rules {
+		regexps[idx], _ = regexp.Compile(r.Regular())
 	}
 
 	cntRegexp = len(rules)

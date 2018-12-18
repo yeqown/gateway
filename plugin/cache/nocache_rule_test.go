@@ -2,11 +2,13 @@ package cache
 
 import (
 	"testing"
+
+	"github.com/yeqown/gateway/config/rule"
 )
 
 func Test_initRules(t *testing.T) {
 	type args struct {
-		rules []Rule
+		rules []rule.Nocacher
 	}
 	tests := []struct {
 		name string
@@ -15,9 +17,9 @@ func Test_initRules(t *testing.T) {
 		{
 			name: "case 1",
 			args: args{
-				rules: []Rule{
-					Rule{Regular: "^/api$"},
-					Rule{Regular: "/d{1,2}*"},
+				rules: []rule.Nocacher{
+					rule.NocacheCfg{Regexp: "^/api$"},
+					rule.NocacheCfg{Regexp: "/d{1,2}*"},
 				},
 			},
 		},

@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/yeqown/gateway"
+	"github.com/yeqown/gateway/config/api"
+	cpresistence "github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache"
@@ -17,28 +18,28 @@ import (
 )
 
 var (
-	cfgFile = flag.String("cfgFile", "./config.json", "load config from this file")
+	cfgFile = flag.String("cfgFile", "./filestore.config.json", "file store data json")
+	cfgDB   = flag.String("cfgDB", "./db.config.json", "db store config json file")
 )
 
-// main will do some initalize work and
-// start the whole api-gateway
 func main() {
-	// load config form file
-	cfg, err := gateway.LoadConfig(*cfgFile)
-	if err != nil {
-		panic(err)
-	}
+	flag.Parse()
+
+	// config store
+	store := cpresistence.NewJSONFileStore(*cfgFile)
+	api.SetGlobal(store)
+	cfg := store.Instance()
 
 	// init logger path
 	logger.InitLogger(cfg.Logpath)
 
 	// initial plugins
-	plgProxy := proxy.New(cfg.ProxyCfg)
+	plgProxy := proxy.New(cfg.ProxyReverseServers, cfg.ProxyPathRules, cfg.ProxyServerRules)
 	plgHTTPLogger := httplog.New(logger.Logger)
-	plgCache := cache.New(presistence.NewInMemoryStore(), cfg.CachenoRules)
+	plgCache := cache.New(presistence.NewInMemoryStore(), cfg.Nocache)
 	plgTokenBucket := ratelimit.New(10, 1)
 
-	e := &gateway.Engine{
+	e := &Engine{
 		Logger: logger.Logger,
 		Plugins: []plugin.Plugin{
 			plgHTTPLogger,

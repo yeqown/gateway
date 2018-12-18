@@ -11,6 +11,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/logger"
 )
 
@@ -26,12 +27,12 @@ type responseChan struct {
 }
 
 func combineReq(ctx context.Context, serverHost string, body io.Reader,
-	cfg CombineReqCfg, rc chan<- responseChan) {
+	comb rule.Combiner, rc chan<- responseChan) {
 	var (
 		err error
 		r   = responseChan{
 			Err:   nil,
-			Field: cfg.Field,
+			Field: comb.Field(),
 			Data:  nil,
 		}
 	)
@@ -52,8 +53,8 @@ func combineReq(ctx context.Context, serverHost string, body io.Reader,
 		r.Err = ErrTimeout
 		break
 	default:
-		url := fmt.Sprintf("%s%s", serverHost, cfg.Path)
-		req, err := http.NewRequest(cfg.Method, url, body)
+		url := fmt.Sprintf("%s%s", serverHost, comb.Path())
+		req, err := http.NewRequest(comb.Method(), url, body)
 		if err != nil {
 			r.Err = err
 			logger.Logger.Errorf("could not finish NewRequest: %v", err)

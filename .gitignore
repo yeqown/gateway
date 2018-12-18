@@ -18,4 +18,4 @@
 logs/
 /testdata/
 vendor/
-cmd/*
+gateway

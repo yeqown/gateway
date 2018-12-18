@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache/presistence"
@@ -27,7 +28,7 @@ const (
 )
 
 // New PluginStore ...
-func New(store presistence.Store, rules []Rule) *Cache {
+func New(store presistence.Store, rules []rule.Nocacher) *Cache {
 	initRules(rules)
 
 	return &Cache{

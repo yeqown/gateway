@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/utils"
@@ -35,35 +36,41 @@ var (
 func defaultHandleFunc(w http.ResponseWriter, req *http.Request, params httprouter.Params) {}
 
 // New ... load configs from outter to generate a new proxy plugin
-func New(c *Config) *Proxy {
+func New(
+	reverseServers map[string][]rule.ReverseServer,
+	pathRules []rule.PathRuler,
+	srvRules []rule.ServerRuler,
+) *Proxy {
 	p := &Proxy{
 		router:         httprouter.New(),
 		balancers:      make(map[string]*Balancer),
-		srvCfgsMap:     make(map[string]ReverseServerCfg),
-		pathRulesMap:   make(map[string]PathRule),
-		srvRulesMap:    make(map[string]ServerRule),
+		srvCfgsMap:     make(map[string]rule.ReverseServer),
+		pathRulesMap:   make(map[string]rule.PathRuler),
+		srvRulesMap:    make(map[string]rule.ServerRuler),
 		reverseProxies: make(map[string]*httputil.ReverseProxy),
 	}
 
 	// initial work
-	p.loadBalancers(c.ReverseServerCfgs)
-	p.loadReverseProxyPathRules(c.PathRules)
-	p.loadReverseProxyServerRules(c.ServerRules)
+	p.loadBalancers(reverseServers)
+	p.loadReverseProxyPathRules(pathRules)
+	p.loadReverseProxyServerRules(srvRules)
 
 	return p
 }
 
 // Proxy ...
 type Proxy struct {
-	// path router
-	router       *httprouter.Router
-	pathRulesMap map[string]PathRule // path as key and config
+	// router
+	router *httprouter.Router
+
 	// reverse proxy configs and balancers
 	reverseProxies map[string]*httputil.ReverseProxy
-	srvCfgsMap     map[string]ReverseServerCfg
 	balancers      map[string]*Balancer // balancer to distribute
-	// server proxy configs
-	srvRulesMap map[string]ServerRule
+
+	// config
+	pathRulesMap map[string]rule.PathRuler // path as key and config
+	srvRulesMap  map[string]rule.ServerRuler
+	srvCfgsMap   map[string]rule.ReverseServer
 }
 
 // Handle ... proxy to handle with request ...
@@ -107,7 +114,7 @@ func (p *Proxy) matchedPathRule(method, path string) bool {
 	return handle != nil
 }
 
-func (p *Proxy) matchedServerRule(path string) (ServerRule, bool) {
+func (p *Proxy) matchedServerRule(path string) (rule.ServerRuler, bool) {
 	pathPrefix := utils.ParseURIPrefix(path)
 	pathPrefix = strings.ToLower(pathPrefix)
 	rule, ok := p.srvRulesMap[pathPrefix]
@@ -115,14 +122,14 @@ func (p *Proxy) matchedServerRule(path string) (ServerRule, bool) {
 }
 
 // to load cfgs (type []proxy.ReverseServerCfg) to initial Proxy.Balancers
-func (p *Proxy) loadBalancers(cfgs map[string][]ReverseServerCfg) {
+func (p *Proxy) loadBalancers(cfgs map[string][]rule.ReverseServer) {
 	for _, cfg := range cfgs {
 		srvCfgs := make([]ServerCfgInterface, len(cfg))
 		for idx, srv := range cfg {
 			srvCfgs[idx] = srv
-			target, err := url.Parse(srv.Addr)
+			target, err := url.Parse(srv.Addr())
 			if err != nil {
-				panic(utils.Fstring("could not parse URL: %s", srv.Addr))
+				panic(utils.Fstring("could not parse URL: %s", srv.Addr()))
 			}
 
 			// generate reverse proxy
@@ -133,30 +140,30 @@ func (p *Proxy) loadBalancers(cfgs map[string][]ReverseServerCfg) {
 				utils.ResponseString(w, err.Error())
 				return
 			}
-			key := utils.Fstring("%s_%d", srv.Name, idx)
+			key := utils.Fstring("%s_%d", srv.Name(), idx)
 			key = strings.ToLower(key)
 			p.reverseProxies[key] = reversePorxy
 			p.srvCfgsMap[key] = srv
 		}
 		// o !
 		if len(cfg) != 0 {
-			p.balancers[cfg[0].Name] = NewBalancer(srvCfgs)
+			p.balancers[cfg[0].Name()] = NewBalancer(srvCfgs)
 		}
 	}
 }
 
 // to load rules (type []proxy.PathRule) to initial
-func (p *Proxy) loadReverseProxyPathRules(rules []PathRule) {
+func (p *Proxy) loadReverseProxyPathRules(rules []rule.PathRuler) {
 	for _, rule := range rules {
 		// [done] TODO: valid rule all string need to be lower
-		path := strings.ToLower(rule.Path)
-		method := strings.ToLower(rule.Method)
+		path := strings.ToLower(rule.Path())
+		method := strings.ToLower(rule.Method())
 		if _, ok := p.pathRulesMap[path]; ok {
 			panic(utils.Fstring("duplicate path rule: %s", path))
 		}
 		// TODO: generate new rule with lower case string
 		p.pathRulesMap[path] = rule
-		for _, method := range strings.Split(rule.Method, ",") {
+		for _, method := range strings.Split(rule.Method(), ",") {
 			p.router.Handle(method, path, defaultHandleFunc)
 		}
 
@@ -165,10 +172,10 @@ func (p *Proxy) loadReverseProxyPathRules(rules []PathRule) {
 }
 
 //  to load rules (type []proxy.ServerRule) to initial
-func (p *Proxy) loadReverseProxyServerRules(rules []ServerRule) {
+func (p *Proxy) loadReverseProxyServerRules(rules []rule.ServerRuler) {
 	for _, rule := range rules {
 		// [done] TODO: valid rule all string need to be lower
-		prefix := strings.ToLower(rule.Prefix)
+		prefix := strings.ToLower(rule.Prefix())
 		if len(prefix) <= 1 {
 			log.Printf("error: prefix of %s is too short, so skipped\n", prefix)
 			continue
@@ -182,22 +189,22 @@ func (p *Proxy) loadReverseProxyServerRules(rules []ServerRule) {
 		}
 		// TODO: new with lower case string
 		p.srvRulesMap[prefix] = rule
-		logger.Logger.Infof("SRV rule:%s_%s registered", rule.ServerName, rule.Prefix)
+		logger.Logger.Infof("SRV rule:%s_%s registered", rule.ServerName(), rule.Prefix())
 	}
 }
 
 // callReverseURI reverse proxy to remote server and combine repsonse.
-func (p *Proxy) callReverseURI(rule PathRule, c *plugin.Context) error {
-	oriPath := strings.ToLower(rule.Path)
+func (p *Proxy) callReverseURI(pr rule.PathRuler, c *plugin.Context) error {
+	oriPath := strings.ToLower(pr.Path())
 	req := c.Request()
 	w := c.ResponseWriter()
 	// pure reverse proxy here
-	if !rule.NeedCombine {
-		if len(rule.RewritePath) != 0 {
-			req.URL.Path = rule.RewritePath
+	if !pr.NeedCombine() {
+		if len(pr.RewritePath()) != 0 {
+			req.URL.Path = pr.RewritePath()
 		}
 
-		srvName := strings.ToLower(rule.ServerName)
+		srvName := strings.ToLower(pr.ServerName())
 		bla, ok := p.balancers[srvName]
 		if !ok {
 			logger.Logger.Errorf("could not found balancer of %s", oriPath)
@@ -218,27 +225,27 @@ func (p *Proxy) callReverseURI(rule PathRule, c *plugin.Context) error {
 		return nil
 	}
 	// [done] TODO: combine two or more response
-	respChan := make(chan responseChan, len(rule.CombineReqCfgs))
+	respChan := make(chan responseChan, len(pr.CombineReqCfgs()))
 	ctx, cancel := context.WithTimeout(context.Background(), ctxTIMEOUT)
 	defer cancel()
 
 	wg := sync.WaitGroup{}
-	for _, cfg := range rule.CombineReqCfgs {
+	for _, combCfg := range pr.CombineReqCfgs() {
 		wg.Add(1)
-		go func(cfg CombineReqCfg) {
+		go func(comb rule.Combiner) {
 			defer wg.Done()
-			bla, ok := p.balancers[cfg.ServerName]
+			bla, ok := p.balancers[comb.ServerName()]
 			if !ok {
 				respChan <- responseChan{
 					Err:   ErrBalancerNotMatched,
-					Field: cfg.Field,
+					Field: comb.Field(),
 					Data:  nil,
 				}
 			}
 			idx := bla.Distribute()
-			srvCfg, _ := p.srvCfgsMap[utils.Fstring("%s_%d", cfg.ServerName, idx)]
-			combineReq(ctx, srvCfg.Addr, nil, cfg, respChan)
-		}(cfg)
+			srvCfg, _ := p.srvCfgsMap[utils.Fstring("%s_%d", comb.ServerName(), idx)]
+			combineReq(ctx, srvCfg.Addr(), nil, comb, respChan)
+		}(combCfg)
 	}
 
 	wg.Wait()
@@ -267,16 +274,16 @@ func (p *Proxy) callReverseURI(rule PathRule, c *plugin.Context) error {
 
 // callReverseServer to proxy request to another server
 // cannot combine two server response
-func (p *Proxy) callReverseServer(rule ServerRule, c *plugin.Context) error {
+func (p *Proxy) callReverseServer(sr rule.ServerRuler, c *plugin.Context) error {
 	// need to trim prefix
 	req := c.Request()
 	w := c.ResponseWriter()
-	if rule.NeedStripPrefix {
+	if sr.NeedStripPrefix() {
 		req.URL.Path = strings.TrimPrefix(strings.ToLower(req.URL.Path),
-			strings.ToLower(rule.Prefix))
+			strings.ToLower(sr.Prefix()))
 	}
 
-	srvName := strings.ToLower(rule.ServerName)
+	srvName := strings.ToLower(sr.ServerName())
 	bla, ok := p.balancers[srvName]
 
 	if !ok {

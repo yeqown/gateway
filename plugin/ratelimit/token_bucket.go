@@ -75,7 +75,7 @@ func (b *Bucket) startGenerateToken() {
 			}
 			b.rwm.Unlock()
 		default:
-			continue
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 
