@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/yeqown/gateway/config/api"
-	cpresistence "github.com/yeqown/gateway/config/presistence"
+	"github.com/yeqown/gateway/config/presistence/filestore"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache"
@@ -26,7 +26,7 @@ func main() {
 	flag.Parse()
 
 	// config store
-	store := cpresistence.NewJSONFileStore(*cfgFile)
+	store := filestore.NewJSONFileStore(*cfgFile)
 	api.SetGlobal(store)
 	cfg := store.Instance()
 

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -31,8 +33,43 @@ type HTTP struct {
 }
 
 func (h *HTTP) initRouter() {
-	h.GET("/plugins", api.PluginsGET)
-	h.GET("/configs", api.AllConfigsGET)
+	h.GET("/plugins", api.PluginsGET)   //
+	h.GET("/config", api.AllConfigsGET) // done
+
+	// Proxy Path Rules
+	h.GET("/plugin/proxy/config/pathrules", api.ProxyConfigPathsGET) // done
+	h.GET("/plugin/proxy/config/pathrule/:id", api.ProxyConfigPathGET)
+	h.POST("/plugin/proxy/config/pathrule", api.ProxyConfigPathPOST)
+	h.PUT("/plugin/proxy/config/pathrule/:id", api.ProxyConfigPathPUT)
+	h.DELETE("/plugin/proxy/config/pathrule/:id", api.ProxyConfigPathDELETE)
+
+	// Proxy Server Rules
+	h.GET("/plugin/proxy/config/srvrules", api.ProxyConfigSrvsGET)
+	h.GET("/plugin/proxy/config/srvrule/:id", api.ProxyConfigSrvGET)
+	h.POST("/plugin/proxy/config/srvrule", api.ProxyConfigSrvPOST)
+	h.PUT("/plugin/proxy/config/srvrule/:id", api.ProxyConfigSrvPUT)
+	h.DELETE("/plugin/proxy/config/srvrule/:id", api.ProxyConfigSrvDELETE)
+
+	// Proxy ReverseServer
+	//TODO: h.GET("/plugin/proxy/config/reversesrv", api.ProxyConfigReverseSrvGET)
+	h.GET("/plugin/proxy/config/reversesrv/:group", api.ProxyConfigReverseSrvGroupGET)
+	h.DELETE("/plugin/proxy/config/reversesrv/:group", api.ProxyConfigReverseSrvGroupDELETE)
+
+	h.GET("/plugin/proxy/config/reversesrv/:group/:id", api.ProxyConfigReverseSrvGET)
+	h.POST("/plugin/proxy/config/reversesrv/:group", api.ProxyConfigReverseSrvPOST)
+	h.PUT("/plugin/proxy/config/reversesrv/:group/:id", api.ProxyConfigReverseSrvPUT)
+	h.DELETE("/plugin/proxy/config/reversesrv/:group/:id", api.ProxyConfigReverseSrvDELETE)
+
+	// Cache
+	h.GET("/plugin/cache/configs", api.CacheConfigsGET)
+	h.GET("/plugin/cache/config/:id", api.CacheConfigGET)
+	h.POST("/plugin/cache/config", api.CacheConfigPOST)
+	h.PUT("/plugin/cache/config/:id", api.CacheConfigPUT)
+	h.DELETE("/plugin/cache/config/:id", api.CacheConfigDELETE)
+
+	// Gate
+	h.GET("/gate/config", api.GateConfigGET)
+	h.PUT("/gate/config", api.GateConfigPUT)
 }
 
 type muxResponse struct {
@@ -56,6 +93,12 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// request log
+	form := utils.ParseRequestForm(utils.CopyRequest(req))
+	logger.Logger.WithFields(map[string]interface{}{
+		"form": form,
+	}).Info("request with form")
+
 	recoverHandle(handle)(w, req, params)
 }
 
@@ -63,7 +106,10 @@ func recoverHandle(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		defer func() {
 			if v := recover(); v != nil {
-				logger.Logger.Errorf("ConfigAPI.panic %s", debug.Stack())
+				errmsg := fmt.Sprintf("error: %v", v)
+				logger.Logger.Error(errmsg)
+				log.Printf("ConfigAPI.panic %s", debug.Stack())
+				utils.ResponseJSON(w, code.NewCodeInfo(code.CodeSystemErr, errmsg))
 			}
 		}()
 

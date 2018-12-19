@@ -1,41 +1,13 @@
-package rule
+package filestore
 
-// ProxyManager ...
-type ProxyManager interface{}
+// filerule.go are struct implement rule/*.Interface
+// and used by filestore.go
 
-// PathRuler 用于单个url配置
-type PathRuler interface {
-	Path() string
-	Method() string
-	ServerName() string
-	RewritePath() string
-	// 组合请求
-	NeedCombine() bool
-	// 组合请求配置
-	CombineReqCfgs() []Combiner
-}
+import (
+	"fmt"
 
-// ServerRuler 用于配置一组服务代理
-type ServerRuler interface {
-	Prefix() string
-	ServerName() string
-	NeedStripPrefix() bool
-}
-
-// ReverseServer 单向代理服务器配置
-type ReverseServer interface {
-	Name() string
-	Addr() string
-	W() int
-}
-
-// Combiner 用于合并请求时候用的配置
-type Combiner interface {
-	ServerName() string
-	Path() string
-	Field() string
-	Method() string
-}
+	"github.com/yeqown/gateway/config/rule"
+)
 
 // PathCfg contains fields to appoint to reverse server and URL
 type PathCfg struct {
@@ -45,6 +17,22 @@ type PathCfg struct {
 	SrvName      string           `json:"server_name"`
 	CombReqs     []*CombineReqCfg `json:"combine_req_cfgs"`
 	NeedComb     bool             `json:"need_combine"`
+	Idx          string           `json:"-"`
+}
+
+// ID func implement Ruler interface
+func (c *PathCfg) ID() string {
+	return c.Idx
+}
+
+// String func implement Ruler interface
+func (c *PathCfg) String() string {
+	return fmt.Sprintf("id: %s, path: %s", c.Idx, c.PPath)
+}
+
+// SetID func implement Ruler interface
+func (c *PathCfg) SetID(id string) {
+	c.Idx = id
 }
 
 // Path of PathCfg
@@ -63,8 +51,8 @@ func (c *PathCfg) RewritePath() string { return c.RRewritePath }
 func (c *PathCfg) NeedCombine() bool { return c.NeedComb }
 
 // CombineReqCfgs of PathCfg
-func (c *PathCfg) CombineReqCfgs() []Combiner {
-	combs := make([]Combiner, len(c.CombReqs))
+func (c *PathCfg) CombineReqCfgs() []rule.Combiner {
+	combs := make([]rule.Combiner, len(c.CombReqs))
 	for idx, c := range c.CombReqs {
 		combs[idx] = c
 	}
@@ -76,7 +64,19 @@ type ServerCfg struct {
 	PPrefix          string `json:"prefix"`
 	SServerName      string `json:"server_name"`
 	NNeedStripPrefix bool   `json:"need_strip_prefix"`
+	Idx              string `json:"-"`
 }
+
+// ID func implement Ruler interface
+func (s *ServerCfg) ID() string { return s.Idx }
+
+// String func implement Ruler interface
+func (s *ServerCfg) String() string {
+	return fmt.Sprintf("ServerCfg id: %s, prefix: %s", s.Idx, s.PPrefix)
+}
+
+// SetID func implement Ruler interface
+func (s *ServerCfg) SetID(id string) { s.Idx = id }
 
 // Prefix ...
 func (s *ServerCfg) Prefix() string { return s.PPrefix }
@@ -94,7 +94,19 @@ type ReverseServerCfg struct {
 	// PPrefix string `json:"prefix"`
 	AAddr  string `json:"addr"`
 	Weight int    `json:"weight"`
+	Idx    string `json:"-"`
 }
+
+// ID func implement Ruler interface
+func (s *ReverseServerCfg) ID() string { return s.Idx }
+
+// String func implement Ruler interface
+func (s *ReverseServerCfg) String() string {
+	return fmt.Sprintf("ReverseServerCfg id: %s, Addr: %s", s.Idx, s.AAddr)
+}
+
+// SetID func implement Ruler interface
+func (s *ReverseServerCfg) SetID(id string) { s.Idx = id }
 
 // Name ...
 func (s ReverseServerCfg) Name() string { return s.NName }
@@ -111,7 +123,19 @@ type CombineReqCfg struct {
 	PPath   string `json:"path"`        // path `/request/path`
 	FField  string `json:"field"`       // want got field
 	MMethod string `json:"method"`      // want match method
+	Idx     string `json:"-"`
 }
+
+// ID func implement Ruler interface
+func (c *CombineReqCfg) ID() string { return c.Idx }
+
+// String func implement Ruler interface
+func (c *CombineReqCfg) String() string {
+	return fmt.Sprintf("CombineReqCfg id: %s, prefix: %s", c.Idx, c.PPath)
+}
+
+// SetID func implement Ruler interface
+func (c *CombineReqCfg) SetID(id string) { c.Idx = id }
 
 // ServerName () string
 func (c *CombineReqCfg) ServerName() string { return c.SrvName }
@@ -124,3 +148,21 @@ func (c *CombineReqCfg) Field() string { return c.FField }
 
 // Method ...
 func (c *CombineReqCfg) Method() string { return c.MMethod }
+
+// NocacheCfg ...
+type NocacheCfg struct {
+	Regexp string `json:"regular"`
+	Idx    string `json:"-"`
+}
+
+// String ...
+func (i *NocacheCfg) String() string { return fmt.Sprintf("NocacheCfg: %s", i.Regexp) }
+
+// ID ...
+func (i *NocacheCfg) ID() string { return i.Idx }
+
+// SetID ...
+func (i *NocacheCfg) SetID(id string) { i.Idx = id }
+
+// Regular ...
+func (i *NocacheCfg) Regular() string { return i.Regexp }
