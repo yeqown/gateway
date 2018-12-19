@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/utils"
 	"github.com/yeqown/server-common/code"
 )
@@ -17,8 +16,8 @@ type proxycfgReverseSrvsForm struct {
 
 type proxycfgReverseSrvsGroup struct {
 	code.CodeInfo
-	Group []rule.ReverseServer `json:"group"`
-	Total int                  `json:"total"`
+	Group []*apiReverseSrver `json:"group"`
+	Total int                `json:"total"`
 }
 
 // ProxyConfigReverseSrvGroupGET ...
@@ -43,7 +42,11 @@ func ProxyConfigReverseSrvGroupGET(w http.ResponseWriter, req *http.Request, par
 	}
 
 	group := param.ByName("group")
-	resp.Group = Global().ReverseServerGroup(group, form.Offset, form.Limit+form.Offset)
+	rules := Global().ReverseServerGroup(group, form.Offset, form.Limit+form.Offset)
+	for _, r := range rules {
+		resp.Group = append(resp.Group, loadFromReverseServer(r))
+	}
+
 	resp.Total = Global().ReverseServerGroupPageCount(group)
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
@@ -66,7 +69,7 @@ func ProxyConfigReverseSrvGroupDELETE(w http.ResponseWriter, req *http.Request, 
 
 type proxycfgReverseSrvResp struct {
 	code.CodeInfo
-	Rule rule.ReverseServer `json:"rule"`
+	Rule *apiReverseSrver `json:"rule"`
 }
 
 // ProxyConfigReverseSrvGET ...
@@ -76,7 +79,8 @@ func ProxyConfigReverseSrvGET(w http.ResponseWriter, req *http.Request, param ht
 	)
 
 	group, id := param.ByName("group"), param.ByName("id")
-	resp.Rule = Global().ReverseServerByID(group, id)
+	rule := Global().ReverseServerByID(group, id)
+	resp.Rule = loadFromReverseServer(rule)
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
@@ -85,7 +89,7 @@ func ProxyConfigReverseSrvGET(w http.ResponseWriter, req *http.Request, param ht
 // ProxyConfigReverseSrvPOST ... [fixed]TOFIX: filestore 不展示ID
 func ProxyConfigReverseSrvPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formReverseSrver)
+		form = new(apiReverseSrver)
 		resp = new(commonResp)
 	)
 
@@ -112,7 +116,7 @@ func ProxyConfigReverseSrvPOST(w http.ResponseWriter, req *http.Request, param h
 // ProxyConfigReverseSrvPUT ...
 func ProxyConfigReverseSrvPUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formReverseSrver)
+		form = new(apiReverseSrver)
 		resp = new(commonResp)
 	)
 

@@ -76,94 +76,143 @@ type commonResp struct {
 	code.CodeInfo
 }
 
-// !!!! 以下的所有结构体定义和函数都是用于声明rule包中的interface !!!!
-// 如：Nocaher, ServerRuler, PathRulerd等等
-// 使用于API 表单定义方便使用
+// !!!! 以下的所有结构体定义和函数都是用于声明package.rule中的interface !!!!
+// 如：Nocaher, ServerRuler, PathRuler等等
+// 用于API表单使用, 同时定义Interface到response struct的转换
 
-type formPathRuler struct {
-	PPath        string            `json:"path" form:"path" valid:"required"`
-	RRewritePath string            `json:"rewrite_path" form:"rewrite_path" valid:"required"`
-	MMethod      string            `json:"method" form:"method" valid:"required"`
-	SrvName      string            `json:"server_name" form:"server_name" valid:"required"`
-	CombReqs     []*formCombReqCfg `json:"combine_req_cfgs" form:"combine_req_cfgs"`
-	NeedComb     bool              `json:"need_combine" form:"need_combine"`
-	Idx          string            `json:"id" form:"-"`
+type apiPathRuler struct {
+	PPath        string           `json:"path" form:"path" valid:"required"`
+	RRewritePath string           `json:"rewrite_path" form:"rewrite_path" valid:"required"`
+	MMethod      string           `json:"method" form:"method" valid:"required"`
+	SrvName      string           `json:"server_name" form:"server_name" valid:"required"`
+	CombReqs     []*apiCombReqCfg `json:"combine_req_cfgs" form:"combine_req_cfgs"`
+	NeedComb     bool             `json:"need_combine" form:"need_combine"`
+	Idx          string           `json:"-" form:"-"`
 }
 
-func (c *formPathRuler) ID() string { return c.Idx }
-func (c *formPathRuler) String() string {
+func (c *apiPathRuler) ID() string { return c.Idx }
+func (c *apiPathRuler) String() string {
 	return fmt.Sprintf("%v", *c)
 }
-func (c *formPathRuler) SetID(id string)     { c.Idx = id }
-func (c *formPathRuler) Path() string        { return c.PPath }
-func (c *formPathRuler) Method() string      { return c.MMethod }
-func (c *formPathRuler) ServerName() string  { return c.SrvName }
-func (c *formPathRuler) RewritePath() string { return c.RRewritePath }
-func (c *formPathRuler) NeedCombine() bool   { return c.NeedComb }
-func (c *formPathRuler) CombineReqCfgs() []rule.Combiner {
+func (c *apiPathRuler) SetID(id string)     { c.Idx = id }
+func (c *apiPathRuler) Path() string        { return c.PPath }
+func (c *apiPathRuler) Method() string      { return c.MMethod }
+func (c *apiPathRuler) ServerName() string  { return c.SrvName }
+func (c *apiPathRuler) RewritePath() string { return c.RRewritePath }
+func (c *apiPathRuler) NeedCombine() bool   { return c.NeedComb }
+func (c *apiPathRuler) CombineReqCfgs() []rule.Combiner {
 	combs := make([]rule.Combiner, len(c.CombReqs))
 	for idx, c := range c.CombReqs {
 		combs[idx] = c
 	}
 	return combs
 }
+func loadFromPathRuler(r rule.PathRuler) *apiPathRuler {
+	reqs := r.CombineReqCfgs()
+	combReqs := make([]*apiCombReqCfg, len(reqs))
 
-type formServerRuler struct {
+	for idx, r := range reqs {
+		combReqs[idx] = loadFromCombiner(r)
+	}
+
+	return &apiPathRuler{
+		PPath:        r.Path(),
+		RRewritePath: r.RewritePath(),
+		MMethod:      r.Method(),
+		SrvName:      r.ServerName(),
+		CombReqs:     combReqs,
+		NeedComb:     r.NeedCombine(),
+		Idx:          r.ID(),
+	}
+}
+
+type apiServerRuler struct {
 	PPrefix          string `json:"prefix" form:"prefix" valid:"required"`
 	SServerName      string `json:"server_name" form:"server_name" valid:"required"`
 	NNeedStripPrefix bool   `json:"need_strip_prefix" form:"need_strip_prefix"`
-	Idx              string `json:"id" form:"-"`
+	Idx              string `json:"-" form:"-"`
 }
 
-func (s *formServerRuler) ID() string      { return s.Idx }
-func (s *formServerRuler) SetID(id string) { s.Idx = id }
-func (s *formServerRuler) String() string {
+func (s *apiServerRuler) ID() string      { return s.Idx }
+func (s *apiServerRuler) SetID(id string) { s.Idx = id }
+func (s *apiServerRuler) String() string {
 	return fmt.Sprintf("ServerCfg id: %s, prefix: %s", s.Idx, s.PPrefix)
 }
-func (s *formServerRuler) Prefix() string        { return s.PPrefix }
-func (s *formServerRuler) ServerName() string    { return s.SServerName }
-func (s *formServerRuler) NeedStripPrefix() bool { return s.NNeedStripPrefix }
+func (s *apiServerRuler) Prefix() string        { return s.PPrefix }
+func (s *apiServerRuler) ServerName() string    { return s.SServerName }
+func (s *apiServerRuler) NeedStripPrefix() bool { return s.NNeedStripPrefix }
+func loadFromServerRuler(r rule.ServerRuler) *apiServerRuler {
+	return &apiServerRuler{
+		PPrefix:          r.Prefix(),
+		SServerName:      r.ServerName(),
+		NNeedStripPrefix: r.NeedStripPrefix(),
+		Idx:              r.ID(),
+	}
+}
 
-type formReverseSrver struct {
+type apiReverseSrver struct {
 	NName  string `json:"name" form:"name" valid:"required"`
 	AAddr  string `json:"addr" form:"addr" valid:"required"`
 	Weight int    `json:"weight" form:"weight" valid:"required"`
-	Idx    string `json:"id" form:"-"`
+	Idx    string `json:"-" form:"-"`
 }
 
-func (s *formReverseSrver) ID() string      { return s.Idx }
-func (s *formReverseSrver) SetID(id string) { s.Idx = id }
-func (s *formReverseSrver) String() string {
-	return fmt.Sprintf("formReverseSrver id: %s, Addr: %s", s.Idx, s.AAddr)
+func (s *apiReverseSrver) ID() string      { return s.Idx }
+func (s *apiReverseSrver) SetID(id string) { s.Idx = id }
+func (s *apiReverseSrver) String() string {
+	return fmt.Sprintf("apiReverseSrver id: %s, Addr: %s", s.Idx, s.AAddr)
 }
-func (s formReverseSrver) Name() string { return s.NName }
-func (s formReverseSrver) Addr() string { return s.AAddr }
-func (s formReverseSrver) W() int       { return s.Weight }
+func (s *apiReverseSrver) Name() string { return s.NName }
+func (s *apiReverseSrver) Addr() string { return s.AAddr }
+func (s *apiReverseSrver) W() int       { return s.Weight }
+func loadFromReverseServer(r rule.ReverseServer) *apiReverseSrver {
+	return &apiReverseSrver{
+		NName:  r.Name(),
+		AAddr:  r.Addr(),
+		Weight: r.W(),
+		Idx:    r.ID(),
+	}
+}
 
-type formCombReqCfg struct {
+type apiCombReqCfg struct {
 	SrvName string `json:"server_name" form:"server_name" valid:"required"` // http://ip:port/path?params
 	PPath   string `json:"path" form:"path" valid:"required"`               // path `/request/path`
 	FField  string `json:"field" form:"field" valid:"required"`             // want got field
 	MMethod string `json:"method" form:"method" valid:"required"`           // want match method
-	Idx     string `json:"id" form:"-"`
+	Idx     string `json:"-" form:"-"`
 }
 
-func (c *formCombReqCfg) ID() string      { return c.Idx }
-func (c *formCombReqCfg) SetID(id string) { c.Idx = id }
-func (c *formCombReqCfg) String() string {
-	return fmt.Sprintf("formCombReqCfg id: %s, prefix: %s", c.Idx, c.PPath)
+func (c *apiCombReqCfg) ID() string      { return c.Idx }
+func (c *apiCombReqCfg) SetID(id string) { c.Idx = id }
+func (c *apiCombReqCfg) String() string {
+	return fmt.Sprintf("apiCombReqCfg id: %s, prefix: %s", c.Idx, c.PPath)
 }
-func (c *formCombReqCfg) ServerName() string { return c.SrvName }
-func (c *formCombReqCfg) Path() string       { return c.PPath }
-func (c *formCombReqCfg) Field() string      { return c.FField }
-func (c *formCombReqCfg) Method() string     { return c.MMethod }
+func (c *apiCombReqCfg) ServerName() string { return c.SrvName }
+func (c *apiCombReqCfg) Path() string       { return c.PPath }
+func (c *apiCombReqCfg) Field() string      { return c.FField }
+func (c *apiCombReqCfg) Method() string     { return c.MMethod }
+func loadFromCombiner(r rule.Combiner) *apiCombReqCfg {
+	return &apiCombReqCfg{
+		SrvName: r.ServerName(),
+		PPath:   r.Path(),
+		FField:  r.Field(),
+		MMethod: r.Method(),
+		Idx:     r.ID(),
+	}
+}
 
-type formNocacher struct {
+type apiNocacher struct {
 	Regexp string `json:"regular" form:"regular" valid:"required"`
-	Idx    string `json:"id" form:"-"`
+	Idx    string `json:"-" form:"-"`
 }
 
-func (i *formNocacher) String() string  { return fmt.Sprintf("formNocacher: %s", i.Regexp) }
-func (i *formNocacher) ID() string      { return i.Idx }
-func (i *formNocacher) SetID(id string) { i.Idx = id }
-func (i *formNocacher) Regular() string { return i.Regexp }
+func (i *apiNocacher) String() string  { return fmt.Sprintf("apiNocacher: %s", i.Regexp) }
+func (i *apiNocacher) ID() string      { return i.Idx }
+func (i *apiNocacher) SetID(id string) { i.Idx = id }
+func (i *apiNocacher) Regular() string { return i.Regexp }
+func loadFromNocacher(r rule.Nocacher) *apiNocacher {
+	return &apiNocacher{
+		Regexp: r.Regular(),
+		Idx:    r.ID(),
+	}
+}

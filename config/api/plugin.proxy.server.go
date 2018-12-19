@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/utils"
 	"github.com/yeqown/server-common/code"
 )
@@ -16,8 +15,8 @@ type proxycfgSrvsForm struct {
 
 type proxycfgSrvsResp struct {
 	code.CodeInfo
-	Rules []rule.ServerRuler `json:"rules"`
-	Total int                `json:"total"`
+	Rules []*apiServerRuler `json:"rules"`
+	Total int               `json:"total"`
 }
 
 // ProxyConfigSrvsGET ...
@@ -41,7 +40,10 @@ func ProxyConfigSrvsGET(w http.ResponseWriter, req *http.Request, param httprout
 		form.Limit = 10
 	}
 
-	resp.Rules = Global().ServerRulesPage(form.Offset, form.Offset+form.Limit)
+	rules := Global().ServerRulesPage(form.Offset, form.Offset+form.Limit)
+	for _, r := range rules {
+		resp.Rules = append(resp.Rules, loadFromServerRuler(r))
+	}
 	resp.Total = Global().ServerRulesCount()
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
@@ -50,7 +52,7 @@ func ProxyConfigSrvsGET(w http.ResponseWriter, req *http.Request, param httprout
 
 type proxycfgSrvResp struct {
 	code.CodeInfo
-	Rule rule.ServerRuler `json:"rule"`
+	Rule *apiServerRuler `json:"rule"`
 }
 
 // ProxyConfigSrvGET ...
@@ -60,7 +62,8 @@ func ProxyConfigSrvGET(w http.ResponseWriter, req *http.Request, param httproute
 	)
 
 	id := param.ByName("id")
-	resp.Rule = Global().ServerRuleByID(id)
+	rule := Global().ServerRuleByID(id)
+	resp.Rule = loadFromServerRuler(rule)
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
@@ -69,7 +72,7 @@ func ProxyConfigSrvGET(w http.ResponseWriter, req *http.Request, param httproute
 // ProxyConfigSrvPOST ...
 func ProxyConfigSrvPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formServerRuler)
+		form = new(apiServerRuler)
 		resp = new(commonResp)
 	)
 	if err := bind(form, req); err != nil {
@@ -94,7 +97,7 @@ func ProxyConfigSrvPOST(w http.ResponseWriter, req *http.Request, param httprout
 // ProxyConfigSrvPUT ...
 func ProxyConfigSrvPUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formServerRuler)
+		form = new(apiServerRuler)
 		resp = new(commonResp)
 	)
 	if err := bind(form, req); err != nil {

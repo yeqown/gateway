@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/utils"
 	"github.com/yeqown/server-common/code"
 )
@@ -16,8 +15,8 @@ type cacheConfigsForm struct {
 
 type cacheConfigsResp struct {
 	code.CodeInfo
-	Rules []rule.Nocacher `json:"rule,omitempty"`
-	Total int             `json:"total,omitempty"`
+	Rules []*apiNocacher `json:"rule,omitempty"`
+	Total int            `json:"total,omitempty"`
 }
 
 // CacheConfigsGET ...
@@ -36,8 +35,14 @@ func CacheConfigsGET(w http.ResponseWriter, req *http.Request, param httprouter.
 		responseWithError(w, resp, err)
 		return
 	}
+	if form.Limit == 0 {
+		form.Limit = 10
+	}
 
-	resp.Rules = Global().NocacheRules(form.Offset, form.Offset+form.Limit)
+	rules := Global().NocacheRules(form.Offset, form.Offset+form.Limit)
+	for _, r := range rules {
+		resp.Rules = append(resp.Rules, loadFromNocacher(r))
+	}
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
 }
@@ -45,7 +50,7 @@ func CacheConfigsGET(w http.ResponseWriter, req *http.Request, param httprouter.
 // single
 type cacheConfigResp struct {
 	code.CodeInfo
-	Rule rule.Nocacher `json:"rule,omitempty"`
+	Rule *apiNocacher `json:"rule,omitempty"`
 }
 
 // CacheConfigGET ...
@@ -55,7 +60,8 @@ func CacheConfigGET(w http.ResponseWriter, req *http.Request, param httprouter.P
 	)
 
 	id := param.ByName("id")
-	resp.Rule = Global().NocacheRuleByID(id)
+	rule := Global().NocacheRuleByID(id)
+	resp.Rule = loadFromNocacher(rule)
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
@@ -64,7 +70,7 @@ func CacheConfigGET(w http.ResponseWriter, req *http.Request, param httprouter.P
 // CacheConfigPOST ...
 func CacheConfigPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formNocacher)
+		form = new(apiNocacher)
 		resp = new(commonResp)
 	)
 
@@ -90,7 +96,7 @@ func CacheConfigPOST(w http.ResponseWriter, req *http.Request, param httprouter.
 // CacheConfigPUT ...
 func CacheConfigPUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formNocacher)
+		form = new(apiNocacher)
 		resp = new(commonResp)
 	)
 	id := param.ByName("id")

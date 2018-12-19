@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/yeqown/gateway/config/rule"
 	"github.com/yeqown/gateway/utils"
 	"github.com/yeqown/server-common/code"
 )
@@ -23,8 +22,8 @@ type proxyPathsGetForm struct {
 
 type proxyPathsGetResp struct {
 	code.CodeInfo
-	Total int              `json:"total,omitempty"`
-	Rules []rule.PathRuler `json:"rules,omitempty"`
+	Total int             `json:"total,omitempty"`
+	Rules []*apiPathRuler `json:"rules,omitempty"`
 }
 
 // ProxyConfigPathsGET ...
@@ -48,7 +47,10 @@ func ProxyConfigPathsGET(w http.ResponseWriter, req *http.Request, param httprou
 	}
 
 	resp.Total = Global().PathRulesCount()
-	resp.Rules = Global().PathRulesPage(form.Offset, form.Offset+form.Limit)
+	rules := Global().PathRulesPage(form.Offset, form.Offset+form.Limit)
+	for _, r := range rules {
+		resp.Rules = append(resp.Rules, loadFromPathRuler(r))
+	}
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
@@ -56,7 +58,7 @@ func ProxyConfigPathsGET(w http.ResponseWriter, req *http.Request, param httprou
 
 type proxyPathGetResp struct {
 	code.CodeInfo
-	Rule rule.PathRuler `json:"rule,omitempty"`
+	Rule *apiPathRuler `json:"rule,omitempty"`
 }
 
 // ProxyConfigPathGET ...
@@ -65,7 +67,8 @@ func ProxyConfigPathGET(w http.ResponseWriter, req *http.Request, param httprout
 		resp = new(proxyPathGetResp)
 	)
 	id := param.ByName("id")
-	resp.Rule = Global().PathRuleByID(id)
+	rule := Global().PathRuleByID(id)
+	resp.Rule = loadFromPathRuler(rule)
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
@@ -74,7 +77,7 @@ func ProxyConfigPathGET(w http.ResponseWriter, req *http.Request, param httprout
 // ProxyConfigPathPOST ... [fixed] TOFIX request by JSON
 func ProxyConfigPathPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formPathRuler)
+		form = new(apiPathRuler)
 		resp = new(commonResp)
 	)
 
@@ -106,7 +109,7 @@ func ProxyConfigPathPOST(w http.ResponseWriter, req *http.Request, param httprou
 // ProxyConfigPathPUT ... [fixed] TOFIX request by JSON
 func ProxyConfigPathPUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
-		form = new(formPathRuler)
+		form = new(apiPathRuler)
 		resp = new(commonResp)
 	)
 
