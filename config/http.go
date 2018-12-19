@@ -37,35 +37,36 @@ func (h *HTTP) initRouter() {
 	h.GET("/config", api.AllConfigsGET) // done
 
 	// Proxy Path Rules
-	h.GET("/plugin/proxy/config/pathrules", api.ProxyConfigPathsGET) // done
-	h.GET("/plugin/proxy/config/pathrule/:id", api.ProxyConfigPathGET)
-	h.POST("/plugin/proxy/config/pathrule", api.ProxyConfigPathPOST)
-	h.PUT("/plugin/proxy/config/pathrule/:id", api.ProxyConfigPathPUT)
-	h.DELETE("/plugin/proxy/config/pathrule/:id", api.ProxyConfigPathDELETE)
+	h.GET("/plugin/proxy/pathrules", api.ProxyConfigPathsGET) // done
+	h.GET("/plugin/proxy/pathrule/:id", api.ProxyConfigPathGET)
+	h.POST("/plugin/proxy/pathrule", api.ProxyConfigPathPOST)
+	h.PUT("/plugin/proxy/pathrule/:id", api.ProxyConfigPathPUT)
+	h.DELETE("/plugin/proxy/pathrule/:id", api.ProxyConfigPathDELETE)
 
 	// Proxy Server Rules
-	h.GET("/plugin/proxy/config/srvrules", api.ProxyConfigSrvsGET)
-	h.GET("/plugin/proxy/config/srvrule/:id", api.ProxyConfigSrvGET)
-	h.POST("/plugin/proxy/config/srvrule", api.ProxyConfigSrvPOST)
-	h.PUT("/plugin/proxy/config/srvrule/:id", api.ProxyConfigSrvPUT)
-	h.DELETE("/plugin/proxy/config/srvrule/:id", api.ProxyConfigSrvDELETE)
+	h.GET("/plugin/proxy/srvrules", api.ProxyConfigSrvsGET)
+	h.GET("/plugin/proxy/srvrule/:id", api.ProxyConfigSrvGET)
+	h.POST("/plugin/proxy/srvrule", api.ProxyConfigSrvPOST)
+	h.PUT("/plugin/proxy/srvrule/:id", api.ProxyConfigSrvPUT)
+	h.DELETE("/plugin/proxy/srvrule/:id", api.ProxyConfigSrvDELETE)
 
 	// Proxy ReverseServer
-	//TODO: h.GET("/plugin/proxy/config/reversesrv", api.ProxyConfigReverseSrvGET)
-	h.GET("/plugin/proxy/config/reversesrv/:group", api.ProxyConfigReverseSrvGroupGET)
-	h.DELETE("/plugin/proxy/config/reversesrv/:group", api.ProxyConfigReverseSrvGroupDELETE)
+	h.GET("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupGET)
+	h.POST("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupPOST)
+	h.PUT("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupPUT)
+	h.DELETE("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupDELETE)
 
-	h.GET("/plugin/proxy/config/reversesrv/:group/:id", api.ProxyConfigReverseSrvGET)
-	h.POST("/plugin/proxy/config/reversesrv/:group", api.ProxyConfigReverseSrvPOST)
-	h.PUT("/plugin/proxy/config/reversesrv/:group/:id", api.ProxyConfigReverseSrvPUT)
-	h.DELETE("/plugin/proxy/config/reversesrv/:group/:id", api.ProxyConfigReverseSrvDELETE)
+	h.GET("/plugin/proxy/reversesrv/:group/:id", api.ProxyConfigReverseSrvGET)
+	h.POST("/plugin/proxy/reversesrv/:group/new", api.ProxyConfigReverseSrvPOST)
+	h.PUT("/plugin/proxy/reversesrv/:group/:id", api.ProxyConfigReverseSrvPUT)
+	h.DELETE("/plugin/proxy/reversesrv/:group/:id", api.ProxyConfigReverseSrvDELETE)
 
 	// Cache
-	h.GET("/plugin/cache/configs", api.CacheConfigsGET)
-	h.GET("/plugin/cache/config/:id", api.CacheConfigGET)
-	h.POST("/plugin/cache/config", api.CacheConfigPOST)
-	h.PUT("/plugin/cache/config/:id", api.CacheConfigPUT)
-	h.DELETE("/plugin/cache/config/:id", api.CacheConfigDELETE)
+	h.GET("/plugin/cacherules", api.CacheConfigsGET)
+	h.GET("/plugin/cacherule/:id", api.CacheConfigGET)
+	h.POST("/plugin/cacherule", api.CacheConfigPOST)
+	h.PUT("/plugin/cacherule/:id", api.CacheConfigPUT)
+	h.DELETE("/plugin/cacherule/:id", api.CacheConfigDELETE)
 
 	// Gate
 	h.GET("/gate/config", api.GateConfigGET)

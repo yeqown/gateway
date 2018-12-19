@@ -9,9 +9,8 @@ type Store interface {
 	NewServerRule(r rule.ServerRuler) error
 	// NewPathRule func
 	NewPathRule(r rule.PathRuler) error
-
-	//TODO: NewReverseServerGroup()
-
+	// NewReverseServerGroup ...
+	NewReverseServerGroup(group string) error
 	// NewReverseServer func
 	NewReverseServer(group string, s rule.ReverseServer) error
 	// NewNocacheRule func
@@ -58,6 +57,8 @@ type Store interface {
 	UpdateServerRule(id string, r rule.ServerRuler) error
 	// UpdatePathRule func ...
 	UpdatePathRule(id string, r rule.PathRuler) error
+	// UpdateReverseServerGroupName ...
+	UpdateReverseServerGroupName(group string, newname string) error
 	// UpdateReverseServer func ...
 	UpdateReverseServer(id string, s rule.ReverseServer) error
 	// UpdateNocacheRule func ...

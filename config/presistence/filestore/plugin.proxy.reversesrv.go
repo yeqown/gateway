@@ -33,6 +33,19 @@ func (f *JSONFileStore) NewReverseServer(group string, s rule.ReverseServer) err
 	return nil
 }
 
+// NewReverseServerGroup ...
+func (f *JSONFileStore) NewReverseServerGroup(group string) error {
+	if _, ok := f.cfg.ProxyReverseServers[group]; ok {
+		return ErrGroupExists
+	}
+
+	f.JSONFile.ProxyReverseServers[group] = make([]*ReverseServerCfg, 0)
+	f.cfg.ProxyReverseServers[group] = make([]rule.ReverseServer, 0)
+	f.updatedC <- true
+
+	return nil
+}
+
 // DelReverseServer func
 func (f *JSONFileStore) DelReverseServer(id string) error {
 	slices := strings.Split(id, "#")
@@ -83,6 +96,25 @@ func (f *JSONFileStore) UpdateReverseServer(
 	f.ProxyReverseServers[group][idx].Weight = s.W()
 	// update cfg
 	f.cfg.ProxyReverseServers[group][idx] = s
+	f.updatedC <- true
+	return nil
+}
+
+// UpdateReverseServerGroupName ...
+func (f *JSONFileStore) UpdateReverseServerGroupName(
+	group string, newname string) error {
+	if _, ok := f.cfg.ProxyReverseServers[group]; !ok {
+		return ErrGroupNotExist
+	}
+
+	if _, ok := f.cfg.ProxyReverseServers[newname]; !ok {
+		return ErrGroupExists
+	}
+
+	f.ProxyReverseServers[newname] = f.ProxyReverseServers[group]
+	delete(f.ProxyReverseServers, group)
+	f.cfg.ProxyReverseServers[newname] = f.cfg.ProxyReverseServers[group]
+	delete(f.cfg.ProxyReverseServers, group)
 	f.updatedC <- true
 	return nil
 }

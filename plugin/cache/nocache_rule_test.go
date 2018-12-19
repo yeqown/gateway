@@ -3,6 +3,7 @@ package cache
 import (
 	"testing"
 
+	"github.com/yeqown/gateway/config/presistence/filestore"
 	"github.com/yeqown/gateway/config/rule"
 )
 
@@ -18,8 +19,8 @@ func Test_initRules(t *testing.T) {
 			name: "case 1",
 			args: args{
 				rules: []rule.Nocacher{
-					rule.NocacheCfg{Regexp: "^/api$"},
-					rule.NocacheCfg{Regexp: "/d{1,2}*"},
+					&filestore.NocacheCfg{Regexp: "^/api$"},
+					&filestore.NocacheCfg{Regexp: "/d{1,2}*"},
 				},
 			},
 		},
@@ -36,10 +37,10 @@ func Test_initRules(t *testing.T) {
 }
 
 func Test_matchNoCacheRule(t *testing.T) {
-	initRules([]Rule{
-		Rule{Regular: "^/api/url$"},
-		Rule{Regular: "^/api/test$"},
-		Rule{Regular: "^/api/hire$"},
+	initRules([]rule.Nocacher{
+		&filestore.NocacheCfg{Regexp: "^/api/url$"},
+		&filestore.NocacheCfg{Regexp: "^/api/test$"},
+		&filestore.NocacheCfg{Regexp: "^/api/hire$"},
 	})
 
 	type args struct {

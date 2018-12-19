@@ -53,6 +53,49 @@ func ProxyConfigReverseSrvGroupGET(w http.ResponseWriter, req *http.Request, par
 	utils.ResponseJSON(w, resp)
 }
 
+type proxycfgReverseSrvGroupPutForm struct {
+	Newname string `form:"newname" valid:"required"`
+}
+
+// ProxyConfigReverseSrvGroupPUT ...
+func ProxyConfigReverseSrvGroupPUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
+	var (
+		form = new(proxycfgReverseSrvGroupPutForm)
+		resp = new(commonResp)
+	)
+
+	if err := bind(form, req); err != nil {
+		responseWithError(w, resp, err)
+		return
+	}
+
+	if err := valid(form); err != nil {
+		responseWithError(w, resp, err)
+		return
+	}
+	group := param.ByName("group")
+	if err := Global().UpdateReverseServerGroupName(group, form.Newname); err != nil {
+		responseWithError(w, resp, err)
+		return
+	}
+	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
+	utils.ResponseJSON(w, resp)
+}
+
+// ProxyConfigReverseSrvGroupPOST ...
+func ProxyConfigReverseSrvGroupPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
+	var (
+		resp = new(commonResp)
+	)
+	group := param.ByName("group")
+	if err := Global().NewReverseServerGroup(group); err != nil {
+		responseWithError(w, resp, err)
+		return
+	}
+	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
+	utils.ResponseJSON(w, resp)
+}
+
 // ProxyConfigReverseSrvGroupDELETE ...
 func ProxyConfigReverseSrvGroupDELETE(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (

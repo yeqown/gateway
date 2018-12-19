@@ -31,6 +31,8 @@ var (
 	ErrBalancerNotMatched = errors.New("plugin.Proxy balancer not matched")
 	// ErrPageNotFound can not found page
 	ErrPageNotFound = errors.New("404 Page Not Found")
+	// ErrNoReverseServer ...
+	ErrNoReverseServer = errors.New("could not found reverse proxy")
 )
 
 func defaultHandleFunc(w http.ResponseWriter, req *http.Request, params httprouter.Params) {}
@@ -161,7 +163,6 @@ func (p *Proxy) loadReverseProxyPathRules(rules []rule.PathRuler) {
 		if _, ok := p.pathRulesMap[path]; ok {
 			panic(utils.Fstring("duplicate path rule: %s", path))
 		}
-		// TODO: generate new rule with lower case string
 		p.pathRulesMap[path] = rule
 		for _, method := range strings.Split(rule.Method(), ",") {
 			p.router.Handle(method, path, defaultHandleFunc)
@@ -187,7 +188,6 @@ func (p *Proxy) loadReverseProxyServerRules(rules []rule.ServerRuler) {
 		if _, ok := p.srvRulesMap[prefix]; ok {
 			panic(utils.Fstring("duplicate server rule prefix: %s", prefix))
 		}
-		// TODO: new with lower case string
 		p.srvRulesMap[prefix] = rule
 		logger.Logger.Infof("SRV rule:%s_%s registered", rule.ServerName(), rule.Prefix())
 	}
@@ -297,7 +297,7 @@ func (p *Proxy) callReverseServer(sr rule.ServerRuler, c *plugin.Context) error 
 
 	reverseProxy, ok := p.reverseProxies[key]
 	if !ok {
-		return fmt.Errorf("could not found reverse proxy")
+		return ErrNoReverseServer
 	}
 	logger.Logger.Infof("proxy to %s", req.URL.Path)
 	reverseProxy.ServeHTTP(w, req)
