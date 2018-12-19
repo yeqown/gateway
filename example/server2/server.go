@@ -25,11 +25,11 @@ func main() {
 		return
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		bs, _ := json.Marshal(response{Msg: "this is server 2", Code: 0})
-		fmt.Fprintf(w, string(bs))
-		return
-	})
+	// http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+	// 	bs, _ := json.Marshal(response{Msg: "this is server 2", Code: 0})
+	// 	fmt.Fprintf(w, string(bs))
+	// 	return
+	// })
 
 	log.Printf("listen on: %s\n", ":8082")
 	log.Fatal(http.ListenAndServe(":8082", nil))

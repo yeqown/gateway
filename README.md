@@ -1,69 +1,103 @@
-# api-gateway
-api gateway for golang http server
+# gateway
 
-# Todos
+api gateway for golang http server.
 
-###* Permission Manager
-	Internal RBAC modules
+## Todos
 
-###* Load Balance
-	ignore this
+- [x] HTTP reverse proxy 
+- [x] HTTP Cache, support URI with query param and post form
+- [] Expansion, support leader node and slave
+- [] Permission, RBAC mode
+- [] Ratelimit, token bucket alg
 
-###* Request Limit
-	limitation rules as following:
-	1. Request as spider
-	2. IP addr in black list
-	3. Request with token (what token? )
+## JSON Config file
 
-###* HTTP Proxy
-	with the config file `config.proxy.json` to redirect request to microserver.
-	and do some assemble works with differrent microserver. this can be config by the file or
-	do this config with an api that is servered by the `github.com/yeqown/gateway`?
-
-###* RPC Caller
-	ignore this tmeporarily
-
-###* Cache Pool
-	to cache what? or this is just a functional module?
-
-###* Support expansion
-	how to design this `github.com/yeqown/gateway` in `master -> slave-node` mode, so I can expand `github.com/yeqown/gateway` easily ?
-
-###* Configurable proxy rule
-	must be support file or api method to config proxy or assemble microserver
-
-# Usage
-
-just run a binary file and do some condfig so you can just run it easily
-
-
-proxy config likes:
+just run a binary file and do some config so you can just run it easily. proxy config likes: `config.proxy.json`
 ```json
-# config.proxy.json
-
 {
-	"proxy": [
-		{
-			"listen_path": "/admin",
-			"target": "https://api.host.com",
-			"strip_listen_path": true			
-		},
-		{
-			"listen_path": "/health",
-			"target": "https://api.host.com",
-			"strip_listen_path": false	
-		}
-	]
+    "port": 8989,
+    "logpath": "./logs",
+    "proxy_config": {
+        "path_rules": [
+            {
+                "path": "/gw/name",
+                "rewrite_path": "/srv/name",
+                "method": "GET",
+                "server_name": "srv1",
+                "combine_req_cfgs": [],
+                "need_combine": false
+            },
+            {
+                "path": "/gw/id",
+                "rewrite_path": "/srv/id",
+                "method": "GET,POST",
+                "server_name": "srv1",
+                "combine_req_cfgs": [],
+                "need_combine": false
+            },
+            {
+                "path": "/gw/combine",
+                "rewrite_path": "",
+                "method": "GET",
+                "server_name": "",
+                "combine_req_cfgs": [
+                    {
+                        "server_name": "srv1",
+                        "path": "/srv/id",
+                        "field": "combine_id",
+                        "method": "GET"
+                    },
+                    {
+                        "server_name": "srv1",
+                        "path": "/srv/name",
+                        "field": "combine_name",
+                        "method": "POST"
+                    }
+                ],
+                "need_combine": true
+            }
+        ],
+        "server_rules": [
+            {
+                "prefix": "/srv",
+                "server_name": "srv1",
+                "need_strip_prefix": false
+            },
+            {
+                "prefix": "/striprefix",
+                "server_name": "srv1",
+                "need_strip_prefix": true
+            }
+        ],
+        "reverse_server_cfgs": {
+            "custom_group1": [
+                {
+                    "name": "srv1",
+                    "prefix": "/srv",
+                    "addr": "127.0.0.1:8081",
+                    "weight": 5
+                },
+                {
+                    "name": "srv1",
+                    "prefix": "/srv",
+                    "addr": "127.0.0.1:8082",
+                    "weight": 5
+                }
+            ]
+        }
+    },
+    "cacheno_rules": [
+        {
+            "regular": "^/api/id$"
+        }
+    ]
 }
 ```
 
-server config likes:
+server config likes: `github.com/yeqown/gateway.server.json`
 ```json
-# github.com/yeqown/gateway.server.json
-
 {
-	"host": "127.0.0.1",
-	"port": "9898"
+    "host": "127.0.0.1",
+    "port": "9898"
 }
 ```
-
