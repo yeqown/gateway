@@ -2,39 +2,69 @@ package utils
 
 import (
 	"bytes"
+	"encoding/hex"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 // CopyRequest copy request from a http.Request
 func CopyRequest(req *http.Request) *http.Request {
-	body, _ := ioutil.ReadAll(req.Body)
-	rdOnly := ioutil.NopCloser(bytes.NewBuffer(body))
+	var (
+		body       []byte
+		readCloser io.ReadCloser
+		cpyReq     *http.Request
+		err        error
+	)
 
-	reqCpy, err := http.NewRequest(req.Method, req.URL.String(), bytes.NewBuffer(body))
+	if req.Body != nil {
+		body, _ = ioutil.ReadAll(req.Body)
+	}
+	readCloser = ioutil.NopCloser(bytes.NewBuffer(body))
+	cpyReq, err = http.NewRequest(req.Method, req.URL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		panic(err)
 	}
 
-	reqCpy.Header = req.Header
-	req.Body = rdOnly
-	return reqCpy
+	cpyReq.Header = req.Header
+	req.Body = readCloser
+	return cpyReq
 }
 
-// ParseRequestForm ...
-// parse request and get form form body or url
-func ParseRequestForm(cpyReq *http.Request) map[string]interface{} {
-	reqData := make(map[string]interface{})
+// ParseRequestForm parse request and get form form body or url
+// nomarlly support "application/www-form-urlencodeded" header
+// TODO: ParseMultipartForm with Content-Type multipart/form-data
+func ParseRequestForm(cpyReq *http.Request) url.Values {
+	cpyReq.ParseForm()
+
 	switch cpyReq.Method {
 	case http.MethodPost, http.MethodPut:
 		cpyReq.ParseMultipartForm(32 << 20)
-	case http.MethodGet:
-		cpyReq.ParseForm()
+		return cpyReq.PostForm
 	default:
-		cpyReq.ParseForm()
+		return cpyReq.Form
 	}
-	for k, v := range cpyReq.Form {
-		reqData[k] = v
+}
+
+// ParseURIPrefix ...
+// 1. prefix/uri; 2 /prefix/uri
+func ParseURIPrefix(uri string) string {
+	slices := strings.Split(uri, "/")
+	if len(slices) < 2 {
+		return "/nonePrefix"
 	}
-	return reqData
+	// uri start with "/"
+	if uri[0] == '/' {
+		return strings.Join(slices[:2], "/")
+	}
+	return "/" + slices[0]
+}
+
+// EncodeFormToString ... you must copy http.Request manually
+func EncodeFormToString(req *http.Request) string {
+	form := ParseRequestForm(req)
+	buffer := bytes.NewBufferString(form.Encode())
+	return hex.EncodeToString(buffer.Bytes())
 }
