@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { Loading } from "element-ui";
+// import { Loading } from "element-ui";
 export default {
   name: "Plugins",
   data() {
@@ -92,9 +92,9 @@ export default {
         this.$notify.success({
           title: "消息通知",
           message: msg.toUpperCase(),
-          duration: 3000
+          duration: 2000
         });
-      }, 2000);
+      }, 1000);
     }
   }
 };

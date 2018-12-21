@@ -1,9 +1,18 @@
 import axios from 'axios'
-import queryString from 'query-string'
+// import queryString from 'query-string'
+import { Message } from 'element-ui'
 import * as basicapi from './basic'
-export { basicapi }
+import * as cacheapi from './cache'
+export { basicapi, cacheapi }
 
-const baseURL = 'http://localhost:8989/gateapi'
+export const baseURL = 'http://localhost:8989/gateapi'
+
+var defaultHeaders = {};
+
+(function (headers) {
+    headers["Content-Type"] = "application/x-www-form-urlencoded"
+})(defaultHeaders);
+
 
 var instance = axios.create({
     baseURL: baseURL,
@@ -11,25 +20,31 @@ var instance = axios.create({
     headers: {},
 })
 
+// resetBaseURL
+export function resetBaseURL({ baseURL }) {
+    instance.defaults.baseURL = baseURL
+    // console.log(baseURL, instance.defaults)
+}
+
 instance.interceptors.request.use((config) => {
-    // before request
-    console.log(config)
     return config
 }, (error) => {
-    // handle with error
     console.log(error)
     return Promise.reject(error)
 })
 
 instance.interceptors.response.use((response) => {
-    console.log(response)
+    // console.log(response)
     if (response.status > 300) {
-        throw Error("wrong status code got")
+        throw Error("wrong status got, " + response.status)
+    }
+    if (response.data.code !== 0) {
+        throw Error(response.data.message)
     }
     return response.data
+
 }, (error) => {
-    console.log(error)
-    return Promise.reject(error)
+    Message.error(error.message)
 })
 
 function requestAPI(config) {
@@ -37,26 +52,21 @@ function requestAPI(config) {
 }
 
 export function getAPI({ uri, params }) {
-    let qs = queryString.stringify(params)
+    // console.log(qs)
     return requestAPI({
         method: 'get',
         url: uri,
-        params: qs,
+        params: params,
         responseType: 'json'
     })
 }
 
-export function postAPI({ uri, params, headers }) {
-    if (!headers) {
-        // throw Error('headers cannot be empty')
-        let headers = {}
-    }
+export function postAPI({ uri, params, headers = defaultHeaders }) {
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
-
     return requestAPI({
         method: 'get',
         url: uri,
-        data: params,
+        data: serializeForm(params),
         responseType: 'json',
         headers: headers
     })
@@ -66,16 +76,27 @@ export function deleteAPI({ uri, params }) {
     return requestAPI({
         method: 'delete',
         url: uri,
-        data: params,
+        data: serializeForm(params),
         responseType: 'json',
     })
 }
 
-export function putAPI({ uri, params }) {
+export function putAPI({ uri, params, headers = defaultHeaders }) {
     return requestAPI({
         method: 'put',
         url: uri,
-        data: params,
-        responseType: 'json'
+        data: serializeForm(params),
+        responseType: 'json',
+        headers: headers
     })
+}
+
+function serializeForm(params) {
+    let body = new FormData()
+
+    Object.keys(params).map(key => {
+        body.append(key, params[key])
+    })
+
+    return body
 }
