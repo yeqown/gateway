@@ -13,4 +13,5 @@ require (
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181119195503-ec83556a53fe // indirect
 	gopkg.in/go-playground/validator.v9 v9.24.0
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 )

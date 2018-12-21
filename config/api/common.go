@@ -16,6 +16,11 @@ var (
 	global   presistence.Store
 	decoder  *schema.Decoder
 	validate *validator.Validate
+
+	_ rule.PathRuler   = &apiPathRuler{}
+	_ rule.ServerRuler = &apiServerRuler{}
+	_ rule.Nocacher    = &apiNocacher{}
+	_ rule.Combiner    = &apiCombReqCfg{}
 )
 
 func init() {
@@ -54,11 +59,11 @@ func valid(v interface{}) error {
 		errs := err.(validator.ValidationErrors)
 		errmsg := ""
 		for _, fieldErr := range errs {
-			errmsg += fmt.Sprintf("Field_%s is invalid, validated by %s;",
+			errmsg += fmt.Sprintf("表单%s不符合%s校验要求;",
 				fieldErr.Field(), fieldErr.Tag(),
 			)
 		}
-		return fmt.Errorf("validate error: %s", errmsg)
+		return fmt.Errorf("参数非法: %s", errmsg)
 
 	}
 	return err
@@ -87,7 +92,7 @@ type apiPathRuler struct {
 	SrvName      string           `json:"server_name" form:"server_name" valid:"required"`
 	CombReqs     []*apiCombReqCfg `json:"combine_req_cfgs" form:"combine_req_cfgs"`
 	NeedComb     bool             `json:"need_combine" form:"need_combine"`
-	Idx          string           `json:"-" form:"-"`
+	Idx          string           `json:"id" form:"-"`
 }
 
 func (c *apiPathRuler) ID() string { return c.Idx }
@@ -130,7 +135,7 @@ type apiServerRuler struct {
 	PPrefix          string `json:"prefix" form:"prefix" valid:"required"`
 	SServerName      string `json:"server_name" form:"server_name" valid:"required"`
 	NNeedStripPrefix bool   `json:"need_strip_prefix" form:"need_strip_prefix"`
-	Idx              string `json:"-" form:"-"`
+	Idx              string `json:"id" form:"-"`
 }
 
 func (s *apiServerRuler) ID() string      { return s.Idx }
@@ -154,7 +159,8 @@ type apiReverseSrver struct {
 	NName  string `json:"name" form:"name" valid:"required"`
 	AAddr  string `json:"addr" form:"addr" valid:"required"`
 	Weight int    `json:"weight" form:"weight" valid:"required"`
-	Idx    string `json:"-" form:"-"`
+	GGroup string `json:"group" form:"group" valid:"required"`
+	Idx    string `json:"id" form:"-"`
 }
 
 func (s *apiReverseSrver) ID() string      { return s.Idx }
@@ -162,14 +168,16 @@ func (s *apiReverseSrver) SetID(id string) { s.Idx = id }
 func (s *apiReverseSrver) String() string {
 	return fmt.Sprintf("apiReverseSrver id: %s, Addr: %s", s.Idx, s.AAddr)
 }
-func (s *apiReverseSrver) Name() string { return s.NName }
-func (s *apiReverseSrver) Addr() string { return s.AAddr }
-func (s *apiReverseSrver) W() int       { return s.Weight }
+func (s *apiReverseSrver) Group() string { return s.GGroup }
+func (s *apiReverseSrver) Name() string  { return s.NName }
+func (s *apiReverseSrver) Addr() string  { return s.AAddr }
+func (s *apiReverseSrver) W() int        { return s.Weight }
 func loadFromReverseServer(r rule.ReverseServer) *apiReverseSrver {
 	return &apiReverseSrver{
 		NName:  r.Name(),
 		AAddr:  r.Addr(),
 		Weight: r.W(),
+		GGroup: r.Group(),
 		Idx:    r.ID(),
 	}
 }
@@ -179,7 +187,7 @@ type apiCombReqCfg struct {
 	PPath   string `json:"path" form:"path" valid:"required"`               // path `/request/path`
 	FField  string `json:"field" form:"field" valid:"required"`             // want got field
 	MMethod string `json:"method" form:"method" valid:"required"`           // want match method
-	Idx     string `json:"-" form:"-"`
+	Idx     string `json:"id" form:"-"`
 }
 
 func (c *apiCombReqCfg) ID() string      { return c.Idx }
@@ -202,17 +210,20 @@ func loadFromCombiner(r rule.Combiner) *apiCombReqCfg {
 }
 
 type apiNocacher struct {
-	Regexp string `json:"regular" form:"regular" valid:"required"`
-	Idx    string `json:"-" form:"-"`
+	Regexp   string `json:"regular" form:"regular" valid:"required"`
+	EEnabled bool   `json:"enabled" form:"enabled"`
+	Idx      string `json:"id" form:"-"`
 }
 
 func (i *apiNocacher) String() string  { return fmt.Sprintf("apiNocacher: %s", i.Regexp) }
 func (i *apiNocacher) ID() string      { return i.Idx }
 func (i *apiNocacher) SetID(id string) { i.Idx = id }
 func (i *apiNocacher) Regular() string { return i.Regexp }
+func (i *apiNocacher) Enabled() bool   { return i.EEnabled }
 func loadFromNocacher(r rule.Nocacher) *apiNocacher {
 	return &apiNocacher{
-		Regexp: r.Regular(),
-		Idx:    r.ID(),
+		Regexp:   r.Regular(),
+		Idx:      r.ID(),
+		EEnabled: r.Enabled(),
 	}
 }

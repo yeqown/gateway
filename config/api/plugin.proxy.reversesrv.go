@@ -1,13 +1,28 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/yeqown/gateway/utils"
 	"github.com/yeqown/server-common/code"
 )
+
+type proxycfgReverseSrvGroupsResp struct {
+	code.CodeInfo
+	Groups map[string]int `json:"groups"`
+}
+
+// ProxyConfigReverseSrvGroupsGET ...
+func ProxyConfigReverseSrvGroupsGET(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
+	var (
+		resp = new(proxycfgReverseSrvGroupsResp)
+	)
+	resp.Groups = Global().ReverseServerGroups()
+
+	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
+	utils.ResponseJSON(w, resp)
+}
 
 type proxycfgReverseSrvsForm struct {
 	Limit  int `form:"limit" valid:"gte=0,lte=10"`
@@ -37,17 +52,12 @@ func ProxyConfigReverseSrvGroupGET(w http.ResponseWriter, req *http.Request, par
 		return
 	}
 
-	if form.Limit == 0 {
-		form.Limit = 10
-	}
-
 	group := param.ByName("group")
-	rules := Global().ReverseServerGroup(group, form.Offset, form.Limit+form.Offset)
+	rules, total := Global().ReverseServerByGroup(group, form.Offset, form.Limit)
+	resp.Total = total
 	for _, r := range rules {
 		resp.Group = append(resp.Group, loadFromReverseServer(r))
 	}
-
-	resp.Total = Global().ReverseServerGroupPageCount(group)
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)
@@ -83,18 +93,18 @@ func ProxyConfigReverseSrvGroupPUT(w http.ResponseWriter, req *http.Request, par
 }
 
 // ProxyConfigReverseSrvGroupPOST ...
-func ProxyConfigReverseSrvGroupPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
-	var (
-		resp = new(commonResp)
-	)
-	group := param.ByName("group")
-	if err := Global().NewReverseServerGroup(group); err != nil {
-		responseWithError(w, resp, err)
-		return
-	}
-	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
-	utils.ResponseJSON(w, resp)
-}
+// func ProxyConfigReverseSrvGroupPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
+// 	var (
+// 		resp = new(commonResp)
+// 	)
+// 	group := param.ByName("group")
+// 	if err := Global().NewReverseServerGroup(group); err != nil {
+// 		responseWithError(w, resp, err)
+// 		return
+// 	}
+// 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
+// 	utils.ResponseJSON(w, resp)
+// }
 
 // ProxyConfigReverseSrvGroupDELETE ...
 func ProxyConfigReverseSrvGroupDELETE(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
@@ -129,7 +139,7 @@ func ProxyConfigReverseSrvGET(w http.ResponseWriter, req *http.Request, param ht
 	utils.ResponseJSON(w, resp)
 }
 
-// ProxyConfigReverseSrvPOST ... [fixed]TOFIX: filestore 不展示ID
+// ProxyConfigReverseSrvPOST ... 新增反向代理配置
 func ProxyConfigReverseSrvPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
 	var (
 		form = new(apiReverseSrver)
@@ -173,8 +183,8 @@ func ProxyConfigReverseSrvPUT(w http.ResponseWriter, req *http.Request, param ht
 		return
 	}
 
-	group, idxs := param.ByName("group"), param.ByName("id")
-	id := fmt.Sprintf("%s#%s", group, idxs)
+	_, id := param.ByName("group"), param.ByName("id")
+	// id := fmt.Sprintf("%s#%s", group, idxs)
 	if err := Global().UpdateReverseServer(id, form); err != nil {
 		responseWithError(w, resp, err)
 		return
@@ -190,8 +200,8 @@ func ProxyConfigReverseSrvDELETE(w http.ResponseWriter, req *http.Request, param
 		resp = new(commonResp)
 	)
 
-	group, idxs := param.ByName("group"), param.ByName("id")
-	id := fmt.Sprintf("%s#%s", group, idxs)
+	_, id := param.ByName("group"), param.ByName("id")
+	// id := fmt.Sprintf("%s#%s", group, idxs)
 
 	if err := Global().DelReverseServer(id); err != nil {
 		responseWithError(w, resp, err)

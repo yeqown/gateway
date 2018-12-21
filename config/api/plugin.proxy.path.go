@@ -22,8 +22,8 @@ type proxyPathsGetForm struct {
 
 type proxyPathsGetResp struct {
 	code.CodeInfo
-	Total int             `json:"total,omitempty"`
-	Rules []*apiPathRuler `json:"rules,omitempty"`
+	Total int             `json:"total"`
+	Rules []*apiPathRuler `json:"rules"`
 }
 
 // ProxyConfigPathsGET ...
@@ -42,12 +42,9 @@ func ProxyConfigPathsGET(w http.ResponseWriter, req *http.Request, param httprou
 		responseWithError(w, resp, err)
 		return
 	}
-	if form.Limit == 0 {
-		form.Limit = 10
-	}
 
-	resp.Total = Global().PathRulesCount()
-	rules := Global().PathRulesPage(form.Offset, form.Offset+form.Limit)
+	rules, total := Global().PathRulesPage(form.Offset, form.Limit)
+	resp.Total = total
 	for _, r := range rules {
 		resp.Rules = append(resp.Rules, loadFromPathRuler(r))
 	}

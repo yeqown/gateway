@@ -3,14 +3,15 @@ package rule
 // Ruler interface
 type Ruler interface {
 	ID() string
-	String() string
 	SetID(id string)
+	// String() string
 }
 
 // Nocacher ...
 type Nocacher interface {
 	Ruler
 	Regular() string
+	Enabled() bool
 }
 
 // PathRuler 用于单个url配置
@@ -39,6 +40,7 @@ type ReverseServer interface {
 	Ruler
 	Name() string
 	Addr() string
+	Group() string
 	W() int
 }
 

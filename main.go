@@ -5,9 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/yeqown/gateway/config/api"
-	"github.com/yeqown/gateway/config/presistence/filestore"
+	"github.com/yeqown/gateway/config/presistence/mongostore"
 	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache"
@@ -18,20 +19,39 @@ import (
 )
 
 var (
-	cfgFile = flag.String("cfgFile", "./filestore.config.json", "file store data json")
-	cfgDB   = flag.String("cfgDB", "./db.config.json", "db store config json file")
+	logpath = flag.String("logpath", "./logs", "whcih path will log files be stored ")
+	port    = flag.Int("port", 8989, "the config gate server will listen at the port")
+	// cfgDB   = flag.String("cfgDB", "./db.config.json", "db store config json file")
 )
 
 func main() {
 	flag.Parse()
 
 	// config store
-	store := filestore.NewJSONFileStore(*cfgFile)
+	store, err := mongostore.New("mongodb://127.0.0.1:27017", "gateway")
+	if err != nil {
+		panic(err)
+	}
+
+	go func() {
+		// ticker := time.NewTicker(time.Second * 5)
+		for {
+			select {
+			case c := <-store.Updated():
+				logger.Logger.Infof("store plgCode: %v changed", c)
+			// case <-ticker.C:
+			// 	logger.Logger.Info("time tick")
+			default:
+				time.Sleep(200 * time.Millisecond)
+			}
+		}
+	}()
+
 	api.SetGlobal(store)
 	cfg := store.Instance()
 
 	// init logger path
-	logger.InitLogger(cfg.Logpath)
+	logger.InitLogger(*logpath)
 
 	// initial plugins
 	plgProxy := proxy.New(cfg.ProxyReverseServers, cfg.ProxyPathRules, cfg.ProxyServerRules)
@@ -48,7 +68,7 @@ func main() {
 			plgProxy,
 		},
 	}
-	addr := fmt.Sprintf(":%d", cfg.Port)
+	addr := fmt.Sprintf(":%d", *port)
 	if err := e.ListenAndServe(addr); err != nil {
 		log.Fatal(err)
 	}

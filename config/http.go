@@ -33,11 +33,11 @@ type HTTP struct {
 }
 
 func (h *HTTP) initRouter() {
-	h.GET("/plugins", api.PluginsGET)   //
-	h.GET("/config", api.AllConfigsGET) // done
+	h.GET("/plugins", api.PluginsGET)
+	h.GET("/config", api.AllConfigsGET)
 
 	// Proxy Path Rules
-	h.GET("/plugin/proxy/pathrules", api.ProxyConfigPathsGET) // done
+	h.GET("/plugin/proxy/pathrules", api.ProxyConfigPathsGET)
 	h.GET("/plugin/proxy/pathrule/:id", api.ProxyConfigPathGET)
 	h.POST("/plugin/proxy/pathrule", api.ProxyConfigPathPOST)
 	h.PUT("/plugin/proxy/pathrule/:id", api.ProxyConfigPathPUT)
@@ -51,26 +51,25 @@ func (h *HTTP) initRouter() {
 	h.DELETE("/plugin/proxy/srvrule/:id", api.ProxyConfigSrvDELETE)
 
 	// Proxy ReverseServer
+	h.GET("/plugin/proxy/reversesrvgroups", api.ProxyConfigReverseSrvGroupsGET)
 	h.GET("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupGET)
-	h.POST("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupPOST)
 	h.PUT("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupPUT)
 	h.DELETE("/plugin/proxy/reversesrv/:group", api.ProxyConfigReverseSrvGroupDELETE)
-
 	h.GET("/plugin/proxy/reversesrv/:group/:id", api.ProxyConfigReverseSrvGET)
-	h.POST("/plugin/proxy/reversesrv/:group/new", api.ProxyConfigReverseSrvPOST)
+	h.POST("/plugin/proxy/reversesrv", api.ProxyConfigReverseSrvPOST)
 	h.PUT("/plugin/proxy/reversesrv/:group/:id", api.ProxyConfigReverseSrvPUT)
 	h.DELETE("/plugin/proxy/reversesrv/:group/:id", api.ProxyConfigReverseSrvDELETE)
 
 	// Cache
-	h.GET("/plugin/cacherules", api.CacheConfigsGET)
-	h.GET("/plugin/cacherule/:id", api.CacheConfigGET)
-	h.POST("/plugin/cacherule", api.CacheConfigPOST)
-	h.PUT("/plugin/cacherule/:id", api.CacheConfigPUT)
-	h.DELETE("/plugin/cacherule/:id", api.CacheConfigDELETE)
+	h.GET("/plugin/cache/rules", api.CacheConfigsGET)
+	h.GET("/plugin/cache/rule/:id", api.CacheConfigGET)
+	h.POST("/plugin/cache/rule", api.CacheConfigPOST)
+	h.PUT("/plugin/cache/rule/:id", api.CacheConfigPUT)
+	h.DELETE("/plugin/cache/rule/:id", api.CacheConfigDELETE)
 
 	// Gate
-	h.GET("/gate/config", api.GateConfigGET)
-	h.PUT("/gate/config", api.GateConfigPUT)
+	// h.GET("/gate/config", api.GateConfigGET)
+	// h.PUT("/gate/config", api.GateConfigPUT)
 }
 
 type muxResponse struct {
@@ -82,6 +81,11 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var (
 		resp = new(muxResponse)
 	)
+
+	// cors header setting
+	w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, h.Prefix)
 	handle, params, tsr := h.Lookup(req.Method, req.URL.Path)

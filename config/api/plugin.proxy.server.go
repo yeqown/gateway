@@ -40,11 +40,11 @@ func ProxyConfigSrvsGET(w http.ResponseWriter, req *http.Request, param httprout
 		form.Limit = 10
 	}
 
-	rules := Global().ServerRulesPage(form.Offset, form.Offset+form.Limit)
+	rules, total := Global().ServerRulesPage(form.Offset, form.Limit)
+	resp.Total = total
 	for _, r := range rules {
 		resp.Rules = append(resp.Rules, loadFromServerRuler(r))
 	}
-	resp.Total = Global().ServerRulesCount()
 
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
 	utils.ResponseJSON(w, resp)

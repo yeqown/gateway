@@ -10,13 +10,13 @@ import (
 
 type cacheConfigsForm struct {
 	Limit  int `form:"limit" valid:"gte=0,lte=10"`
-	Offset int `form:"offser" valid:"gte=0"`
+	Offset int `form:"offset" valid:"gte=0"`
 }
 
 type cacheConfigsResp struct {
 	code.CodeInfo
-	Rules []*apiNocacher `json:"rule,omitempty"`
-	Total int            `json:"total,omitempty"`
+	Rules []*apiNocacher `json:"rules"`
+	Total int            `json:"total"`
 }
 
 // CacheConfigsGET ...
@@ -35,11 +35,9 @@ func CacheConfigsGET(w http.ResponseWriter, req *http.Request, param httprouter.
 		responseWithError(w, resp, err)
 		return
 	}
-	if form.Limit == 0 {
-		form.Limit = 10
-	}
 
-	rules := Global().NocacheRules(form.Offset, form.Offset+form.Limit)
+	rules, total := Global().NocacheRules(form.Offset, form.Limit)
+	resp.Total = total
 	for _, r := range rules {
 		resp.Rules = append(resp.Rules, loadFromNocacher(r))
 	}
