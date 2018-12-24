@@ -33,13 +33,13 @@ func ProxyConfigPathsGET(w http.ResponseWriter, req *http.Request, param httprou
 		form = new(proxyPathsGetForm)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -80,22 +80,22 @@ func ProxyConfigPathPOST(w http.ResponseWriter, req *http.Request, param httprou
 
 	byts, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		responseWithError(w, resp, errJSONDataNeed)
+		ResponseWithError(w, resp, errJSONDataNeed)
 		return
 	}
 	err = json.Unmarshal(byts, form)
 	if err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
 	if err := Global().NewPathRule(form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -112,22 +112,22 @@ func ProxyConfigPathPUT(w http.ResponseWriter, req *http.Request, param httprout
 
 	byts, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		responseWithError(w, resp, errJSONDataNeed)
+		ResponseWithError(w, resp, errJSONDataNeed)
 		return
 	}
 	err = json.Unmarshal(byts, form)
 	if err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 	id := param.ByName("id")
 	if err := Global().UpdatePathRule(id, form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
@@ -143,7 +143,7 @@ func ProxyConfigPathDELETE(w http.ResponseWriter, req *http.Request, param httpr
 	id := param.ByName("id")
 
 	if err := Global().DelPathRule(id); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))

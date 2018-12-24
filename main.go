@@ -5,12 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/yeqown/gateway/config/api"
 	"github.com/yeqown/gateway/config/presistence/mongostore"
 	"github.com/yeqown/gateway/logger"
-	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache"
 	"github.com/yeqown/gateway/plugin/cache/presistence"
 	"github.com/yeqown/gateway/plugin/httplog"
@@ -33,20 +31,6 @@ func main() {
 		panic(err)
 	}
 
-	go func() {
-		// ticker := time.NewTicker(time.Second * 5)
-		for {
-			select {
-			case c := <-store.Updated():
-				logger.Logger.Infof("store plgCode: %v changed", c)
-			// case <-ticker.C:
-			// 	logger.Logger.Info("time tick")
-			default:
-				time.Sleep(200 * time.Millisecond)
-			}
-		}
-	}()
-
 	api.SetGlobal(store)
 	cfg := store.Instance()
 
@@ -60,14 +44,13 @@ func main() {
 	plgTokenBucket := ratelimit.New(10, 1)
 
 	e := &Engine{
-		Logger: logger.Logger,
-		Plugins: []plugin.Plugin{
-			plgHTTPLogger,
-			plgTokenBucket,
-			plgCache,
-			plgProxy,
-		},
+		Logger:        logger.Logger,
+		StoreChangedC: store.Updated(),
 	}
+
+	// TODO: load with active plugin names list
+	e.use(plgHTTPLogger, plgTokenBucket, plgCache, plgProxy)
+
 	addr := fmt.Sprintf(":%d", *port)
 	if err := e.ListenAndServe(addr); err != nil {
 		log.Fatal(err)

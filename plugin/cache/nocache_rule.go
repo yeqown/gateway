@@ -8,28 +8,26 @@ import (
 	"github.com/yeqown/gateway/config/rule"
 )
 
-// if the URI match rules then will not enable cache plugin
-
-var (
-	regexps   []*regexp.Regexp
-	cntRegexp int
-)
-
 // no cache rule settings, if the URI macthed any rule in rules
 // then abort cache plugin processing
-func initRules(rules []rule.Nocacher) {
-	regexps = make([]*regexp.Regexp, len(rules))
+func (c *Cache) load(rules []rule.Nocacher) {
+	c.regexps = make([]*regexp.Regexp, len(rules))
 	for idx, r := range rules {
-		regexps[idx], _ = regexp.Compile(r.Regular())
+		c.regexps[idx], _ = regexp.Compile(r.Regular())
 	}
 
-	cntRegexp = len(rules)
+	c.cntRegexp = len(rules)
 }
 
-// match NocacheRule
-func matchNoCacheRule(uri string) bool {
+// match NocacheRule, true means no cache
+// fasle means cache
+func (c *Cache) matchNoCacheRule(uri string) bool {
+	if c.cntRegexp == 0 {
+		return false
+	}
+
 	var (
-		checkChan = make(chan bool, cntRegexp)
+		checkChan = make(chan bool, c.cntRegexp)
 		counter   int
 	)
 
@@ -37,12 +35,11 @@ func matchNoCacheRule(uri string) bool {
 	defer cancel()
 	defer close(checkChan)
 
-	for _, reg := range regexps {
+	for _, reg := range c.regexps {
 		// fmt.Printf("reg: %s matched\n", reg.String())
 		go func(ctx context.Context, reg *regexp.Regexp, c chan<- bool) {
 			// to catch send on close channel
 			go func() { recover() }()
-
 			select {
 			case <-ctx.Done():
 				println("timeout matchNoCacheRule")
@@ -60,7 +57,7 @@ func matchNoCacheRule(uri string) bool {
 		}
 		// counter to mark all gorountine called finished
 		counter++
-		if counter >= cntRegexp {
+		if counter >= c.cntRegexp {
 			break
 		}
 	}

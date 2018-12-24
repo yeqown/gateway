@@ -6,9 +6,11 @@ api gateway for golang http server.
 
 - [x] HTTP reverse proxy 
 - [x] HTTP Cache, support URI with query param and post form
-- [] Expansion, support leader node and slave
-- [] Permission, RBAC mode
-- [] Ratelimit, token bucket alg
+- [ ] Expansion, support leader node and slave
+- [ ] Permission, RBAC mode
+- [x] Ratelimit, token bucket alg
+- [ ] Plugin Switch and status watching
+- [ ] config reload automatic or manually
 
 ## JSON Config file
 

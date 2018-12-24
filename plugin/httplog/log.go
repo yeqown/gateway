@@ -11,20 +11,26 @@ import (
 	log "github.com/yeqown/server-common/logger"
 )
 
+var (
+	_ plugin.Plugin = &HTTPLogger{}
+)
+
 // New func: generate a new HTTPLogger
 func New(logger *log.Logger) *HTTPLogger {
 	return &HTTPLogger{
 		logger:      logger,
 		logResponse: true,
+		enabled:     true,
+		status:      plugin.Working,
 	}
 }
 
 // HTTPLogger ...
 type HTTPLogger struct {
-	// log.Logger is writer to log
-	logger *log.Logger
-	// logResponse to log response into file or not
-	logResponse bool
+	logger      *log.Logger // log.Logger is writer to log
+	logResponse bool        // logResponse to log response into file or not
+	enabled     bool
+	status      plugin.PlgStatus
 }
 
 // Handle ...
@@ -70,6 +76,31 @@ func (h *HTTPLogger) Handle(ctx *plugin.Context) {
 		ctx.Method,
 		path,
 	)
+}
+
+// Status ...
+func (h *HTTPLogger) Status() plugin.PlgStatus {
+	return h.status
+}
+
+// Enabled ...
+func (h *HTTPLogger) Enabled() bool {
+	return h.enabled
+}
+
+// Name ...
+func (h *HTTPLogger) Name() string {
+	return "plugin.httplog"
+}
+
+// Enable ...
+func (h *HTTPLogger) Enable(enabled bool) {
+	h.enabled = enabled
+	if !enabled {
+		h.status = plugin.Stopped
+	} else {
+		h.status = plugin.Working
+	}
 }
 
 // type respBodyWriter to write log ...

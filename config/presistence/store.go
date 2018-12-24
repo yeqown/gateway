@@ -29,15 +29,15 @@ var (
 )
 
 // ListPlgByCode to get all changed plugin config
-// func ListPlgByCode(code PluginCode) []PluginCode {
-// 	result := make([]PluginCode, 0, len(codes))
-// 	for _, c := range codes {
-// 		if (c & code) == c {
-// 			result = append(result, c)
-// 		}
-// 	}
-// 	return result
-// }
+func ListPlgByCode(code PluginCode) []PluginCode {
+	result := make([]PluginCode, 0, len(codes))
+	for _, c := range codes {
+		if (c & code) == c {
+			result = append(result, c)
+		}
+	}
+	return result
+}
 
 // ChangedChan ...
 type ChangedChan struct {

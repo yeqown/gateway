@@ -15,9 +15,9 @@ import (
 )
 
 // New a ConfigAPI
-func New() *HTTP {
+func New(prefix string) *HTTP {
 	h := &HTTP{
-		Prefix: "/gateapi",
+		Prefix: prefix,
 		Router: httprouter.New(),
 	}
 
@@ -33,7 +33,7 @@ type HTTP struct {
 }
 
 func (h *HTTP) initRouter() {
-	h.GET("/plugins", api.PluginsGET)
+	// h.GET("/plugins", api.PluginsGET)
 	h.GET("/config", api.AllConfigsGET)
 
 	// Proxy Path Rules

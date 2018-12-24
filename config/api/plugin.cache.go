@@ -26,13 +26,13 @@ func CacheConfigsGET(w http.ResponseWriter, req *http.Request, param httprouter.
 		resp = new(cacheConfigsResp)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -72,18 +72,18 @@ func CacheConfigPOST(w http.ResponseWriter, req *http.Request, param httprouter.
 		resp = new(commonResp)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
 	if err := Global().NewNocacheRule(form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -99,18 +99,18 @@ func CacheConfigPUT(w http.ResponseWriter, req *http.Request, param httprouter.P
 	)
 	id := param.ByName("id")
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
 	if err := Global().UpdateNocacheRule(id, form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -126,7 +126,7 @@ func CacheConfigDELETE(w http.ResponseWriter, req *http.Request, param httproute
 
 	id := param.ByName("id")
 	if err := Global().DelNocacheRule(id); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 

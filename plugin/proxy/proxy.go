@@ -33,6 +33,8 @@ var (
 	ErrPageNotFound = errors.New("404 Page Not Found")
 	// ErrNoReverseServer ...
 	ErrNoReverseServer = errors.New("could not found reverse proxy")
+
+	_ plugin.Plugin = &Proxy{}
 )
 
 func defaultHandleFunc(w http.ResponseWriter, req *http.Request, params httprouter.Params) {}
@@ -50,6 +52,9 @@ func New(
 		pathRulesMap:   make(map[string]rule.PathRuler),
 		srvRulesMap:    make(map[string]rule.ServerRuler),
 		reverseProxies: make(map[string]*httputil.ReverseProxy),
+
+		enabled: true,
+		status:  plugin.Working,
 	}
 
 	// initial work
@@ -73,6 +78,9 @@ type Proxy struct {
 	pathRulesMap map[string]rule.PathRuler // path as key and config
 	srvRulesMap  map[string]rule.ServerRuler
 	srvCfgsMap   map[string]rule.ReverseServer
+
+	enabled bool
+	status  plugin.PlgStatus
 }
 
 // Handle ... proxy to handle with request ...
@@ -108,6 +116,31 @@ func (p *Proxy) Handle(c *plugin.Context) {
 	c.SetError(ErrPageNotFound)
 	c.AbortWithStatus(http.StatusNotFound)
 	return
+}
+
+// Enabled ...
+func (p *Proxy) Enabled() bool {
+	return p.enabled
+}
+
+// Status ...
+func (p *Proxy) Status() plugin.PlgStatus {
+	return p.status
+}
+
+// Name ...
+func (p *Proxy) Name() string {
+	return "plugin.proxy"
+}
+
+// Enable ...
+func (p *Proxy) Enable(enabled bool) {
+	p.enabled = enabled
+	if !enabled {
+		p.status = plugin.Stopped
+	} else {
+		p.status = plugin.Working
+	}
 }
 
 func (p *Proxy) matchedPathRule(method, path string) bool {

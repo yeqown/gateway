@@ -74,11 +74,6 @@ func (s *Store) loadProxyPathRules() []rule.PathRuler {
 }
 
 func (s *Store) loadReverseServerRules() map[string][]rule.ReverseServer {
-	// models := make([]*reverseServerModel, 0)
-	// if err := s.C(plgPorxyReverseSrvCollName).Find(nil).All(&models); err != nil {
-	// 	panic(err)
-	// }
-
 	mapNameCnt := s.ReverseServerGroups()
 	result := make(map[string][]rule.ReverseServer)
 	for name, cnt := range mapNameCnt {
@@ -99,7 +94,10 @@ func (s *Store) loadReverseServerRules() map[string][]rule.ReverseServer {
 // Instance ...
 func (s *Store) Instance() *presistence.Instance {
 	return &presistence.Instance{
-		ProxyServerRules: s.loadProxyServerRules(),
+		ProxyServerRules:    s.loadProxyServerRules(),
+		ProxyPathRules:      s.loadProxyPathRules(),
+		ProxyReverseServers: s.loadReverseServerRules(),
+		Nocache:             s.loadNocacherRules(),
 	}
 }
 
