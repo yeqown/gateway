@@ -31,7 +31,7 @@ type PathRuler interface {
 type ServerRuler interface {
 	Ruler
 	Prefix() string
-	ServerName() string
+	ServerName() string // return group name
 	NeedStripPrefix() bool
 }
 

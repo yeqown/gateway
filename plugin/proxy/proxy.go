@@ -156,7 +156,7 @@ func (p *Proxy) LoadReverseServer(cfgs map[string][]rule.ReverseServer) {
 	p.srvCfgsMap = make(map[string]rule.ReverseServer)
 	p.reverseProxies = make(map[string]*httputil.ReverseProxy)
 
-	for _, cfg := range cfgs {
+	for groupName, cfg := range cfgs {
 		srvCfgs := make([]ServerCfgInterface, len(cfg))
 		for idx, srv := range cfg {
 			srvCfgs[idx] = srv
@@ -173,14 +173,14 @@ func (p *Proxy) LoadReverseServer(cfgs map[string][]rule.ReverseServer) {
 				utils.ResponseString(w, err.Error())
 				return
 			}
-			key := utils.Fstring("%s_%d", srv.Name(), idx)
+			key := utils.Fstring("%s_%d", groupName, idx)
 			key = strings.ToLower(key)
 			p.reverseProxies[key] = reversePorxy
 			p.srvCfgsMap[key] = srv
 		}
 		// o !
 		if len(cfg) != 0 {
-			p.balancers[cfg[0].Name()] = NewBalancer(srvCfgs)
+			p.balancers[groupName] = NewBalancer(srvCfgs)
 		}
 	}
 }
@@ -241,7 +241,7 @@ func (p *Proxy) callReverseURI(pr rule.PathRuler, c *plugin.Context) error {
 		srvName := strings.ToLower(pr.ServerName())
 		bla, ok := p.balancers[srvName]
 		if !ok {
-			logger.Logger.Errorf("could not found balancer of %s", oriPath)
+			logger.Logger.Errorf("could not found balancer of %s, %s", oriPath, srvName)
 			errmsg := utils.Fstring("error: plugin.Proxy balancer not found! (path: %s)", oriPath)
 			return fmt.Errorf("%v", errmsg)
 		}
