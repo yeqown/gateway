@@ -46,21 +46,15 @@ func New(
 	srvRules []rule.ServerRuler,
 ) *Proxy {
 	p := &Proxy{
-		router:         httprouter.New(),
-		balancers:      make(map[string]*Balancer),
-		srvCfgsMap:     make(map[string]rule.ReverseServer),
-		pathRulesMap:   make(map[string]rule.PathRuler),
-		srvRulesMap:    make(map[string]rule.ServerRuler),
-		reverseProxies: make(map[string]*httputil.ReverseProxy),
-
+		// router:  httprouter.New(),
 		enabled: true,
 		status:  plugin.Working,
 	}
 
 	// initial work
-	p.loadBalancers(reverseServers)
-	p.loadReverseProxyPathRules(pathRules)
-	p.loadReverseProxyServerRules(srvRules)
+	p.LoadReverseServer(reverseServers)
+	p.LoadPathRuler(pathRules)
+	p.LoadServerRuler(srvRules)
 
 	return p
 }
@@ -156,8 +150,12 @@ func (p *Proxy) matchedServerRule(path string) (rule.ServerRuler, bool) {
 	return rule, ok
 }
 
-// to load cfgs (type []proxy.ReverseServerCfg) to initial Proxy.Balancers
-func (p *Proxy) loadBalancers(cfgs map[string][]rule.ReverseServer) {
+// LoadReverseServer to load cfgs (type []proxy.ReverseServerCfg) to initial Proxy.Balancers
+func (p *Proxy) LoadReverseServer(cfgs map[string][]rule.ReverseServer) {
+	p.balancers = make(map[string]*Balancer)
+	p.srvCfgsMap = make(map[string]rule.ReverseServer)
+	p.reverseProxies = make(map[string]*httputil.ReverseProxy)
+
 	for _, cfg := range cfgs {
 		srvCfgs := make([]ServerCfgInterface, len(cfg))
 		for idx, srv := range cfg {
@@ -187,8 +185,10 @@ func (p *Proxy) loadBalancers(cfgs map[string][]rule.ReverseServer) {
 	}
 }
 
-// to load rules (type []proxy.PathRule) to initial
-func (p *Proxy) loadReverseProxyPathRules(rules []rule.PathRuler) {
+// LoadPathRuler to load rules (type []proxy.PathRule) to initial
+func (p *Proxy) LoadPathRuler(rules []rule.PathRuler) {
+	p.pathRulesMap = make(map[string]rule.PathRuler)
+	p.router = httprouter.New()
 	for _, rule := range rules {
 		// [done] TODO: valid rule all string need to be lower
 		path := strings.ToLower(rule.Path())
@@ -205,8 +205,9 @@ func (p *Proxy) loadReverseProxyPathRules(rules []rule.PathRuler) {
 	}
 }
 
-//  to load rules (type []proxy.ServerRule) to initial
-func (p *Proxy) loadReverseProxyServerRules(rules []rule.ServerRuler) {
+// LoadServerRuler to load rules (type []proxy.ServerRule) to initial
+func (p *Proxy) LoadServerRuler(rules []rule.ServerRuler) {
+	p.srvRulesMap = make(map[string]rule.ServerRuler)
 	for _, rule := range rules {
 		// [done] TODO: valid rule all string need to be lower
 		prefix := strings.ToLower(rule.Prefix())

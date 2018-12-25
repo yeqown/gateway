@@ -7,7 +7,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/yeqown/gateway/config"
-	"github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/plugin"
 	log "github.com/yeqown/server-common/logger"
 )
@@ -30,7 +29,7 @@ type Engine struct {
 	plgapi *httprouter.Router // plugin manage api router
 
 	// cfgAPI        *config.HTTP                   // config api handler
-	StoreChangedC <-chan presistence.ChangedChan // store changed channel
+	// StoreChangedC <-chan presistence.ChangedChan // store changed channel
 }
 
 func (e *Engine) use(plgs ...plugin.Plugin) {
@@ -57,29 +56,6 @@ func (e *Engine) init(addr string) {
 
 	// e.initActivePlugins()
 	e.initPluginManageRouter()
-
-	go func() {
-		for {
-			select {
-			case c := <-e.StoreChangedC:
-				e.Logger.Infof("store changed: %v", c)
-				switch c.Code {
-				case presistence.PlgCodeCache:
-					e.Logger.Info("reload cache rules")
-				case presistence.PlgCodeProxyPath:
-					e.Logger.Info("reload Proxy path rules")
-				case presistence.PlgCodeProxyServer:
-					e.Logger.Info("reload Proxy server rulese")
-				case presistence.PlgCodeProxyReverseSrv:
-					e.Logger.Info("reload Proxy reversesrv rules")
-				case presistence.PlgCodeRatelimit:
-					e.Logger.Info("reload ratelimit rules")
-				}
-			default:
-				time.Sleep(200 * time.Millisecond)
-			}
-		}
-	}()
 }
 
 // func (e *Engine) initActivePlugins() {

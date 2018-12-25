@@ -40,7 +40,7 @@ func New(store presistence.Store, rules []rule.Nocacher) *Cache {
 		status:        plugin.Working,
 		enabled:       true,
 	}
-	c.load(rules)
+	c.Load(rules)
 	return c
 }
 

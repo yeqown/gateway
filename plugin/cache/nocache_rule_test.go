@@ -43,7 +43,7 @@ func Test_initRules(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c.load(tt.args.rules)
+			c.Load(tt.args.rules)
 			if want := len(tt.args.rules); c.cntRegexp != want {
 				t.Errorf("could not initRules, not equal length: %d, want %d",
 					c.cntRegexp, want)
@@ -54,7 +54,7 @@ func Test_initRules(t *testing.T) {
 
 func Test_matchNoCacheRule(t *testing.T) {
 	c := &Cache{}
-	c.load([]rule.Nocacher{
+	c.Load([]rule.Nocacher{
 		nocacheCfg{Regexp: "^/api/url$"},
 		nocacheCfg{Regexp: "^/api/test$"},
 		nocacheCfg{Regexp: "^/api/hire$"},

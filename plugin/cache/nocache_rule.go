@@ -10,7 +10,7 @@ import (
 
 // no cache rule settings, if the URI macthed any rule in rules
 // then abort cache plugin processing
-func (c *Cache) load(rules []rule.Nocacher) {
+func (c *Cache) Load(rules []rule.Nocacher) {
 	c.regexps = make([]*regexp.Regexp, len(rules))
 	for idx, r := range rules {
 		c.regexps[idx], _ = regexp.Compile(r.Regular())
