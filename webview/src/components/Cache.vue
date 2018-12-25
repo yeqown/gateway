@@ -13,13 +13,19 @@
         <span class="gray">是否启用：</span>
         <el-switch v-model="nocache.enabled" @change="hdlEditNocacheRule"></el-switch>
       </el-col>
-      <el-col :span="4" :offset="0">
-        <el-button type="primary" size="small" @click="dialogFormVisible = true">修改</el-button>
-        <el-button type="danger" size="small" @click="delNocacheRule">删除</el-button>
+      <el-col :span="2" :offset="2">
+        <el-button
+          type="primary"
+          size="small"
+          @click="dialogFormVisible = true"
+          circle
+          icon="el-icon-edit"
+        ></el-button>
+        <el-button type="danger" size="small" @click="delNocacheRule" circle icon="el-icon-delete"></el-button>
       </el-col>
     </el-row>
     <!-- edit dialog -->
-    <el-dialog :title="`修改规则: ${nocache.id}`" :visible.sync="dialogFormVisible" width="600px">
+    <el-dialog :title="`修改规则: ${nocache.id}`" :visible.sync="dialogFormVisible" width="400px">
       <el-form ref="refNewForm" :model="nocache" label-position="left">
         <el-form-item label="正则表达式" label-width="100px">
           <el-input v-model="nocache.regular" autocomplete="off"></el-input>

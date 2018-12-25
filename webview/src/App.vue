@@ -22,7 +22,7 @@
             <el-submenu index="gate.plugin.proxy">
               <template slot="title">代理插件</template>
               <el-menu-item index="gate.plugin.proxy.path">路径代理</el-menu-item>
-              <el-menu-item index="gate.plugin.proxy.server">反向服务代理</el-menu-item>
+              <el-menu-item index="gate.plugin.proxy.server">服务代理</el-menu-item>
               <el-menu-item index="gate.plugin.proxy.reverseServer">服务实例组</el-menu-item>
             </el-submenu>
           </el-submenu>
@@ -85,6 +85,9 @@ export default {
           break;
         case "gate.plugin.cache":
           this.$router.push("/configs/plugin/cache")
+          break;
+        case "gate.plugin.proxy.reverseServer":
+          this.$router.push("/configs/plugin/proxy/reverse_server")
           break;
         case "gate.plugins":
           this.$router.push("/plugins")

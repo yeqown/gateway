@@ -6,6 +6,11 @@ import Plugins from './views/Plugins'
 import PluginConfig from './views/PluginConfig'
 import BaseConfig from './views/configviews/GatewayBasicConf'
 import PluginCache from './views/configviews/PluginCache'
+import PluginProxy from '@/views/configviews/PluginProxy'
+import ReverseServer from '@/views/configviews/ProxyReverseServer'
+
+import ReverseServerGroup from '@/components/ReverseServerGroup'
+
 
 const router = new VueRouter({
   routes: [
@@ -25,7 +30,7 @@ const router = new VueRouter({
       name: 'gatebase',
       path: '/configs/',
       // redirect: _ => {
-      //   return '/configs/basic'
+      //   return '/plugins'
       // },
       component: Config,
       meta: { breadcrumb: '配置' },
@@ -40,6 +45,9 @@ const router = new VueRouter({
           name: 'plugin',
           path: 'plugin/',
           component: PluginConfig,
+          redirect: _ => {
+            return '/plugins'
+          },
           meta: { breadcrumb: '插件' },
           children: [
             {
@@ -47,6 +55,26 @@ const router = new VueRouter({
               path: 'cache',
               component: PluginCache,
               meta: { breadcrumb: '缓存' }
+            },
+            {
+              name: 'plugin.proxy',
+              path: 'proxy/',
+              component: PluginProxy,
+              meta: { breadcrumb: '代理' },
+              children: [
+                {
+                  name: 'plugin.proxy.reverseServer',
+                  path: 'reverse_server',
+                  component: ReverseServer,
+                  meta: { breadcrumb: '反向代理服务器' }
+                },
+                {
+                  name: 'plugin.proxy.reverseServer.group',
+                  path: 'reverse_server/:group',
+                  component: ReverseServerGroup,
+                  meta: { breadcrumb: '组别详情' }
+                }
+              ]
             }
           ]
         }
@@ -56,7 +84,7 @@ const router = new VueRouter({
       name: 'plugins-manage',
       path: '/plugins',
       component: Plugins,
-      meta: {breadcrumb: '插件管理'}
+      meta: { breadcrumb: '插件管理' }
     }
   ]
 })
@@ -68,8 +96,8 @@ router.beforeEach((to, from, next) => {
   to.matched.forEach(matched => {
     // console.log(matched)
     to.params.breadcrumbs.push({
-        name: matched.meta.breadcrumb, 
-        to: matched.path
+      name: matched.meta.breadcrumb,
+      to: matched.path
     })
   })
   next()

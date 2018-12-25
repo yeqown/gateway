@@ -1,8 +1,14 @@
 <template>
   <div style="text-align:left">
     <el-row>
-      <el-col :span="2" :offset="0">
-        <el-button size="small" type="primary" @click="dialogFormVisible=true">新增</el-button>
+      <el-col :span="1" :offset="23">
+        <el-button
+          size="small"
+          type="success"
+          @click="dialogFormVisible=true"
+          icon="el-icon-plus"
+          circle
+        />
       </el-col>
       <!-- <el-col :span="22" :offset="0">规则数总计：{{total}}</el-col> -->
     </el-row>
@@ -26,7 +32,7 @@
       ></el-pagination>
     </el-row>
     <!-- new dialog -->
-    <el-dialog title="发布规则" :visible.sync="dialogFormVisible" width="600px">
+    <el-dialog title="发布规则" :visible.sync="dialogFormVisible" width="400px">
       <el-form ref="refNewForm" :model="newForm" label-position="left">
         <el-form-item label="正则表达式" label-width="100px">
           <el-input v-model="newForm.regular" autocomplete="off"></el-input>
@@ -46,7 +52,7 @@
 import Cache from "@/components/Cache";
 import { cacheapi } from "@/apis";
 export default {
-  name: "BaseConfig",
+  name: "PluginCache",
   data() {
     return {
       curPage: 1,
@@ -65,7 +71,7 @@ export default {
   methods: {
     handleCurrentChange(page) {
       this.curPage = page;
-      this.refresh()
+      this.refresh();
     },
     async hdlNewNocacheRule() {
       let { enabled, regular } = this.newForm;
@@ -99,7 +105,7 @@ export default {
       this.getCacheRules(this.curPage);
     },
     resetNewForm() {
-      this.newForm = {regular: "", enabled: true};
+      this.newForm = { regular: "", enabled: true };
     }
   },
   async created() {

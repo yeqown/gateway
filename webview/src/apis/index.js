@@ -3,7 +3,9 @@ import axios from 'axios'
 import { Notification } from 'element-ui'
 import * as basicapi from './basic'
 import * as cacheapi from './cache'
-export { basicapi, cacheapi }
+import * as proxyapi from './proxy'
+
+export { basicapi, cacheapi, proxyapi}
 
 export const baseURL = 'http://localhost:8989'
 
