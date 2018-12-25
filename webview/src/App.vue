@@ -48,12 +48,12 @@
       </el-main>
     </el-container>
 
-    <el-footer>
+    <!-- <el-footer>
       <p>
         Copyright@yeqown 2018
         yeqwon@gmail.com
       </p>
-    </el-footer>
+    </el-footer> -->
   </div>
 </template>
 

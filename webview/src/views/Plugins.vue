@@ -1,32 +1,32 @@
 <template>
   <div style="text-align:left">
     <el-row>
-      <h4>插件列表及状态展示</h4>
+      <h4>插件列表</h4>
     </el-row>
     <el-row>
       <el-col :span="24" :offset="0">
-        <div class="plugin-status-wrapper" v-for="(plg, idx) in plugins" :key="plg.key">
+        <div class="plugin-status-wrapper" v-for="(plg, idx) in plugins" :key="plg.name">
           <el-row :class="plg.status">
             <el-col :span="2" :offset="1" style="line-height:60px">
               <el-switch
                 v-model="plg.enabled"
                 active-color="#13ce66"
                 inactive-color="#ff4949"
-                :disabled="plg.key=== 'plugin.proxy'"
+                :disabled="plg.name=== 'plugin.proxy'"
                 @change="hdlChange(idx)"
               ></el-switch>
             </el-col>
             <el-col :span="15" :offset="1">
               <el-alert
-                :title="plg.name"
-                :description="plg.description"
-                :type="plg.status"
+                :title="plgCfg[plg.name].name"
+                :description="plgCfg[plg.name].description"
+                :type="(plg.status==='working')?'success':'info'"
                 show-icon
                 :closable="false"
               ></el-alert>
             </el-col>
             <el-col :span="2" :offset="3" style="line-height:60px">
-              <router-link :to="plg.to" class="link">前往设置</router-link>
+              <router-link :to="plg.to || '/hell'" class="link">前往设置</router-link>
             </el-col>
           </el-row>
         </div>
@@ -36,44 +36,18 @@
 </template>
 
 <script>
-// import { Loading } from "element-ui";
+import { basicapi } from "@/apis";
+import { plgCfg } from "@/config";
 export default {
   name: "Plugins",
   data() {
     return {
-      plugins: [
-        {
-          name: "代理",
-          description:
-            "代理插件是一个用于控制网关对于每一个请求进行控制，重新调度的插件",
-          key: "plugin.proxy",
-          enabled: true,
-          status: "success",
-          to: "/configs/plugin/proxy"
-        },
-        {
-          name: "缓存",
-          description:
-            "缓存插件是一个用于控制网关对于每一个请求进行控制，重新调度的插件",
-          key: "plugin.cache",
-          enabled: true,
-          status: "warning",
-          to: "/configs/plugin/cache"
-        },
-        {
-          name: "流量控制",
-          description:
-            "流量控制插件是一个用于控制网关对于每一个请求进行控制，重新调度的插件",
-          key: "plugin.ratelimit",
-          enabled: true,
-          status: "error",
-          to: "/configs/plugin/ratelimit"
-        }
-      ]
+      plugins: [],
+      plgCfg: plgCfg
     };
   },
   methods: {
-    hdlChange(idx) {
+    async hdlChange(idx) {
       // this.plugins[idx].enabled = !this.plugins[idx].enabled
       let plg = this.plugins[idx];
       let msg = `插件 ${plg.name} 已关闭！`;
@@ -81,6 +55,9 @@ export default {
         msg = `插件 ${plg.name} 已启用！`;
       }
 
+      // console.log(idx, this.plugins[idx].enabled)
+      await this.enablePlugin(idx, this.plugins[idx].enabled);
+      await this.refresh();
       const loading = this.$loading({
         lock: true,
         text: "请求服务中...",
@@ -95,7 +72,26 @@ export default {
           duration: 2000
         });
       }, 1000);
+    },
+    refresh() {
+      basicapi
+        .getPluginsList()
+        .then(data => {
+          this.plugins = data.plugins;
+        })
+        .catch(err => console.error(err));
+    },
+    enablePlugin(idx, enabled) {
+      basicapi
+        .enablePlugin({ idx, enabled })
+        .then(data => {
+          console.log(data);
+        })
+        .catch(err => console.log(err));
     }
+  },
+  async created() {
+    await this.refresh();
   }
 };
 </script>
@@ -104,14 +100,13 @@ export default {
 .plugin-status-wrapper {
   margin-bottom: 1em;
 }
-.success {
+
+.working {
   background-color: #f0f9eb;
 }
-.warning {
-  background-color: #fdf6ec;
-}
-.error {
-  background-color: #fef0f0;
+
+.stopped {
+  background-color: #f4f4f5;
 }
 
 .link {
