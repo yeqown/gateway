@@ -26,13 +26,13 @@ func ProxyConfigSrvsGET(w http.ResponseWriter, req *http.Request, param httprout
 		resp = new(proxycfgSrvsResp)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -75,18 +75,18 @@ func ProxyConfigSrvPOST(w http.ResponseWriter, req *http.Request, param httprout
 		form = new(apiServerRuler)
 		resp = new(commonResp)
 	)
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
 	if err := Global().NewServerRule(form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -100,18 +100,18 @@ func ProxyConfigSrvPUT(w http.ResponseWriter, req *http.Request, param httproute
 		form = new(apiServerRuler)
 		resp = new(commonResp)
 	)
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 	id := param.ByName("id")
 	if err := Global().UpdateServerRule(id, form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -127,7 +127,7 @@ func ProxyConfigSrvDELETE(w http.ResponseWriter, req *http.Request, param httpro
 
 	id := param.ByName("id")
 	if err := Global().DelServerRule(id); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 

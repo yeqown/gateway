@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/yeqown/gateway/config/api"
+	configpresistence "github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/config/presistence/mongostore"
 	"github.com/yeqown/gateway/logger"
-	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache"
 	"github.com/yeqown/gateway/plugin/cache/presistence"
 	"github.com/yeqown/gateway/plugin/httplog"
@@ -33,20 +33,6 @@ func main() {
 		panic(err)
 	}
 
-	go func() {
-		// ticker := time.NewTicker(time.Second * 5)
-		for {
-			select {
-			case c := <-store.Updated():
-				logger.Logger.Infof("store plgCode: %v changed", c)
-			// case <-ticker.C:
-			// 	logger.Logger.Info("time tick")
-			default:
-				time.Sleep(200 * time.Millisecond)
-			}
-		}
-	}()
-
 	api.SetGlobal(store)
 	cfg := store.Instance()
 
@@ -59,15 +45,37 @@ func main() {
 	plgCache := cache.New(presistence.NewInMemoryStore(), cfg.Nocache)
 	plgTokenBucket := ratelimit.New(10, 1)
 
+	go func(changedC <-chan configpresistence.ChangedChan) {
+		for {
+			select {
+			case c := <-changedC:
+				logger.Logger.Infof("store changed: %v", c)
+				switch c.Code {
+				case configpresistence.PlgCodeCache:
+					plgCache.Load(store.Instance().Nocache)
+				case configpresistence.PlgCodeProxyPath:
+					plgProxy.LoadPathRuler(store.Instance().ProxyPathRules)
+				case configpresistence.PlgCodeProxyServer:
+					plgProxy.LoadServerRuler(store.Instance().ProxyServerRules)
+				case configpresistence.PlgCodeProxyReverseSrv:
+					plgProxy.LoadReverseServer(store.Instance().ProxyReverseServers)
+				case configpresistence.PlgCodeRatelimit:
+					// plgTokenBucket.Load()
+				}
+			default:
+				time.Sleep(200 * time.Millisecond)
+			}
+		}
+	}(store.Updated())
+
 	e := &Engine{
 		Logger: logger.Logger,
-		Plugins: []plugin.Plugin{
-			plgHTTPLogger,
-			plgTokenBucket,
-			plgCache,
-			plgProxy,
-		},
+		// StoreChangedC: store.Updated(),
 	}
+
+	// TODO: load with active plugin names list
+	e.use(plgHTTPLogger, plgTokenBucket, plgCache, plgProxy)
+
 	addr := fmt.Sprintf(":%d", *port)
 	if err := e.ListenAndServe(addr); err != nil {
 		log.Fatal(err)

@@ -42,13 +42,13 @@ func ProxyConfigReverseSrvGroupGET(w http.ResponseWriter, req *http.Request, par
 		resp = new(proxycfgReverseSrvsGroup)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -74,18 +74,18 @@ func ProxyConfigReverseSrvGroupPUT(w http.ResponseWriter, req *http.Request, par
 		resp = new(commonResp)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 	group := param.ByName("group")
 	if err := Global().UpdateReverseServerGroupName(group, form.Newname); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
@@ -113,7 +113,7 @@ func ProxyConfigReverseSrvGroupDELETE(w http.ResponseWriter, req *http.Request, 
 	)
 	group := param.ByName("group")
 	if err := Global().DelReverseServerGroup(group); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
@@ -146,19 +146,19 @@ func ProxyConfigReverseSrvPOST(w http.ResponseWriter, req *http.Request, param h
 		resp = new(commonResp)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
 	group := param.ByName("group")
 	if err := Global().NewReverseServer(group, form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -173,20 +173,20 @@ func ProxyConfigReverseSrvPUT(w http.ResponseWriter, req *http.Request, param ht
 		resp = new(commonResp)
 	)
 
-	if err := bind(form, req); err != nil {
-		responseWithError(w, resp, err)
+	if err := Bind(form, req); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
-	if err := valid(form); err != nil {
-		responseWithError(w, resp, err)
+	if err := Valid(form); err != nil {
+		ResponseWithError(w, resp, err)
 		return
 	}
 
 	_, id := param.ByName("group"), param.ByName("id")
 	// id := fmt.Sprintf("%s#%s", group, idxs)
 	if err := Global().UpdateReverseServer(id, form); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 
@@ -204,7 +204,7 @@ func ProxyConfigReverseSrvDELETE(w http.ResponseWriter, req *http.Request, param
 	// id := fmt.Sprintf("%s#%s", group, idxs)
 
 	if err := Global().DelReverseServer(id); err != nil {
-		responseWithError(w, resp, err)
+		ResponseWithError(w, resp, err)
 		return
 	}
 

@@ -8,6 +8,10 @@ import (
 	"github.com/yeqown/gateway/plugin"
 )
 
+var (
+	_ plugin.Plugin = &Bucket{}
+)
+
 // New a Bucket to limit request with token
 func New(cap, r int) *Bucket {
 	if r > cap {
@@ -17,14 +21,14 @@ func New(cap, r int) *Bucket {
 	var (
 		// once sync.Once
 		b = &Bucket{
-			capacity: 0,
+			capacity: cap,
 			r:        r,
+			rest:     cap / 2,
+			enabled:  true,
+			status:   plugin.Working,
 		}
 	)
 	b.init()
-	// once.Do(func() {
-	// 	b.init()
-	// })
 	return b
 }
 
@@ -34,6 +38,8 @@ type Bucket struct {
 	r        int // speed to generate a token per second
 	rest     int // rest token count
 	rwm      sync.RWMutex
+	enabled  bool
+	status   plugin.PlgStatus
 }
 
 // init bucket
@@ -48,6 +54,31 @@ func (b *Bucket) Handle(c *plugin.Context) {
 		return
 	}
 	c.Next()
+}
+
+// Enabled ...
+func (b *Bucket) Enabled() bool {
+	return b.enabled
+}
+
+// Status ...
+func (b *Bucket) Status() plugin.PlgStatus {
+	return b.status
+}
+
+// Name ...
+func (b *Bucket) Name() string {
+	return "plugin.ratelimit"
+}
+
+// Enable ...
+func (b *Bucket) Enable(enabled bool) {
+	b.enabled = enabled
+	if !enabled {
+		b.status = plugin.Stopped
+	} else {
+		b.status = plugin.Working
+	}
 }
 
 // accquire for a token to allow request process

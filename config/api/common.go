@@ -46,14 +46,14 @@ func SetGlobal(store presistence.Store) {
 	global = store
 }
 
-// bind form
-func bind(dst interface{}, req *http.Request) error {
+// Bind form
+func Bind(dst interface{}, req *http.Request) error {
 	form := utils.ParseRequestForm(req)
 	return decoder.Decode(dst, form)
 }
 
-// valid ...
-func valid(v interface{}) error {
+// Valid ...
+func Valid(v interface{}) error {
 	err := validate.Struct(v)
 	if err != nil {
 		errs := err.(validator.ValidationErrors)
@@ -69,8 +69,8 @@ func valid(v interface{}) error {
 	return err
 }
 
-// responseWithError ...
-func responseWithError(w http.ResponseWriter, resp interface{}, err error) {
+// ResponseWithError ...
+func ResponseWithError(w http.ResponseWriter, resp interface{}, err error) {
 	code.FillCodeInfo(resp,
 		code.NewCodeInfo(code.CodeParamInvalid, err.Error()))
 	utils.ResponseJSON(w, resp)

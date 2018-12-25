@@ -7,9 +7,25 @@ import (
 	"net/http"
 )
 
+// PlgStatus ...
+type PlgStatus string
+
+const (
+	// Reloading ...
+	Reloading PlgStatus = "reloading"
+	// Stopped ...
+	Stopped PlgStatus = "stopped"
+	// Working ...
+	Working PlgStatus = "working"
+)
+
 // Plugin type Plugin want to save all plugin
 type Plugin interface {
 	Handle(ctx *Context)
+	Status() PlgStatus
+	Enabled() bool
+	Name() string
+	Enable(enabled bool)
 }
 
 // New generate a Context
@@ -63,7 +79,9 @@ func (c *Context) Next() {
 		return
 	}
 
-	c.plugins[c.pluginIdx].Handle(c)
+	if c.plugins[c.pluginIdx].Enabled() {
+		c.plugins[c.pluginIdx].Handle(c)
+	}
 	c.Next()
 }
 

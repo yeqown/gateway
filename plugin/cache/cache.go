@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/yeqown/gateway/config/rule"
@@ -18,6 +19,10 @@ import (
 	"github.com/yeqown/gateway/plugin"
 	"github.com/yeqown/gateway/plugin/cache/presistence"
 	"github.com/yeqown/gateway/utils"
+)
+
+var (
+	_ plugin.Plugin = &Cache{}
 )
 
 const (
@@ -29,12 +34,14 @@ const (
 
 // New PluginStore ...
 func New(store presistence.Store, rules []rule.Nocacher) *Cache {
-	initRules(rules)
-
-	return &Cache{
+	c := &Cache{
 		store:         store,
 		serializeForm: false,
+		status:        plugin.Working,
+		enabled:       true,
 	}
+	c.Load(rules)
+	return c
 }
 
 // responseCache to save cache of one URI
@@ -77,11 +84,9 @@ func decodeToCache(byts []byte) (responseCache, error) {
 // cachedWriter ...
 type cachedWriter struct {
 	http.ResponseWriter
-	cache *responseCache
-	store presistence.Store
-	// http status code
-	status int
-	// key to save or get from cache
+	cache  *responseCache
+	store  presistence.Store // http status code
+	status int               // key to save or get from cache
 	key    string
 	expire time.Duration
 }
@@ -121,10 +126,12 @@ func (w cachedWriter) Write(data []byte) (int, error) {
 
 // Cache to serve page cache ...
 type Cache struct {
-	// store interface with value
-	store presistence.Store
-	// serialize form [query and post form]
-	serializeForm bool
+	store         presistence.Store // store interface with value
+	serializeForm bool              // serialize form [query and post form]
+	enabled       bool
+	status        plugin.PlgStatus
+	regexps       []*regexp.Regexp // store regular expression
+	cntRegexp     int              // count of regexps
 }
 
 // generate a key with the given http.Request and serializeForm flag
@@ -166,7 +173,7 @@ func urlEscape(prefix, u string, extern ...string) string {
 func (c *Cache) Handle(ctx *plugin.Context) {
 	defer plugin.Recover("Cache")
 
-	if matchNoCacheRule(ctx.Path) {
+	if c.matchNoCacheRule(ctx.Path) {
 		logger.Logger.Infof("plugin.Cache cannot work with path: %s", ctx.Path)
 		return
 	}
@@ -218,4 +225,29 @@ func (c *Cache) Handle(ctx *plugin.Context) {
 
 	ctx.SetResponseWriter(writer)
 	ctx.Next()
+}
+
+// Enabled ...
+func (c *Cache) Enabled() bool {
+	return c.enabled
+}
+
+// Status ...
+func (c *Cache) Status() plugin.PlgStatus {
+	return c.status
+}
+
+// Name ...
+func (c *Cache) Name() string {
+	return "plugin.cache"
+}
+
+// Enable ...
+func (c *Cache) Enable(enabled bool) {
+	c.enabled = enabled
+	if !enabled {
+		c.status = plugin.Stopped
+	} else {
+		c.status = plugin.Working
+	}
 }
