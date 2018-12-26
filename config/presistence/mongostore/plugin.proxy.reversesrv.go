@@ -50,8 +50,8 @@ func (s *Store) DelReverseServer(id string) error {
 
 // DelReverseServerGroup func
 func (s *Store) DelReverseServerGroup(group string) error {
-	if err := s.C(plgPorxyReverseSrvCollName).
-		Remove(bson.M{"group": group}); err != nil {
+	if _, err := s.C(plgPorxyReverseSrvCollName).
+		RemoveAll(bson.M{"group": group}); err != nil {
 		return err
 	}
 	s.notify(presistence.PlgCodeProxyReverseSrv)
@@ -60,6 +60,17 @@ func (s *Store) DelReverseServerGroup(group string) error {
 
 // UpdateReverseServerGroupName ...
 func (s *Store) UpdateReverseServerGroupName(group string, newname string) error {
+	if group == newname {
+		return nil
+	}
+	var ex = new(reverseServerModel)
+	if err := s.C(plgPorxyReverseSrvCollName).
+		Find(bson.M{"group": newname}).One(ex); err == nil {
+		return errRuleExists
+	} else if err != mgo.ErrNotFound {
+		return err
+	}
+
 	changeInfo, err := s.C(plgPorxyReverseSrvCollName).
 		UpdateAll(bson.M{"group": group}, bson.M{"group": newname})
 
