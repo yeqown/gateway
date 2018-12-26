@@ -3,6 +3,7 @@ package mongostore
 import (
 	"github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/config/rule"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -14,9 +15,17 @@ func (s *Store) NewPathRule(r rule.PathRuler) error {
 	for _, c := range r.CombineReqCfgs() {
 		c.SetID(bson.NewObjectId().Hex())
 	}
-
-	model := loadPathRulerModelFromPathRuler(r)
-	if err := s.C(plgProxyPathCollName).Insert(model); err != nil {
+	doc := loadPathRulerModelFromPathRuler(r)
+	// check dulicated
+	var ex = new(pathRulerModel)
+	if err := s.C(plgProxyPathCollName).
+		Find(bson.M{"path": doc.Path(), "method": doc.Method()}).
+		One(ex); err != nil {
+		return errRuleExists
+	} else if err != mgo.ErrNotFound {
+		return err
+	}
+	if err := s.C(plgProxyPathCollName).Insert(doc); err != nil {
 		return err
 	}
 	s.notify(presistence.PlgCodeProxyPath)

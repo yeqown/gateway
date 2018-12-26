@@ -3,6 +3,7 @@ package mongostore
 import (
 	"github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/config/rule"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -12,6 +13,15 @@ const plgProxyServerCollName = "plg_proxy_srv"
 func (s *Store) NewServerRule(r rule.ServerRuler) error {
 	r.SetID(bson.NewObjectId().Hex())
 	doc := loadServerRulerModelFromServerRuler(r)
+	// check duplicated
+	var ex = new(serverRulerModel)
+	if err := s.C(plgProxyServerCollName).
+		Find(bson.M{"prefix": doc.Prefix()}).One(ex); err == nil {
+		return errRuleExists
+	} else if err != mgo.ErrNotFound {
+		return err
+	}
+
 	if err := s.C(plgProxyServerCollName).Insert(doc); err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package mongostore
 import (
 	"github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/config/rule"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -12,6 +13,14 @@ const plgCacheCollName = "plg_cache"
 func (s *Store) NewNocacheRule(r rule.Nocacher) error {
 	r.SetID(bson.NewObjectId().Hex())
 	doc := loadNocacherModelFromNocacher(r)
+	// check duplicate
+	var ex = new(nocacherModel)
+	if err := s.C(plgCacheCollName).Find(bson.M{"regular": doc.Regular()}).
+		One(ex); err == nil {
+		return errRuleExists
+	} else if err != mgo.ErrNotFound {
+		return err
+	}
 	if err := s.C(plgCacheCollName).Insert(doc); err != nil {
 		return err
 	}

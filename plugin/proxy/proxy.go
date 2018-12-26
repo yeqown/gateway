@@ -238,17 +238,17 @@ func (p *Proxy) callReverseURI(pr rule.PathRuler, c *plugin.Context) error {
 			req.URL.Path = pr.RewritePath()
 		}
 
-		srvName := strings.ToLower(pr.ServerName())
-		bla, ok := p.balancers[srvName]
+		groupName := strings.ToLower(pr.ServerName())
+		bla, ok := p.balancers[groupName]
 		if !ok {
-			logger.Logger.Errorf("could not found balancer of %s, %s", oriPath, srvName)
+			logger.Logger.Errorf("could not found balancer of %s, %s", oriPath, groupName)
 			errmsg := utils.Fstring("error: plugin.Proxy balancer not found! (path: %s)", oriPath)
 			return fmt.Errorf("%v", errmsg)
 		}
 
 		idx := bla.Distribute()
 		key := strings.ToLower(
-			utils.Fstring("%s_%d", srvName, idx))
+			utils.Fstring("%s_%d", groupName, idx))
 		logger.Logger.Infof("proxy to server: %s URI: %s", key, req.URL.Path)
 
 		reverseProxy, ok := p.reverseProxies[key]

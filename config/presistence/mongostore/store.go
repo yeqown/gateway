@@ -1,6 +1,8 @@
 package mongostore
 
 import (
+	"errors"
+
 	"github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/config/rule"
 	"gopkg.in/mgo.v2"
@@ -8,7 +10,8 @@ import (
 )
 
 var (
-	_ presistence.Store = &Store{}
+	_             presistence.Store = &Store{}
+	errRuleExists                   = errors.New("rule exists")
 )
 
 // New ...
