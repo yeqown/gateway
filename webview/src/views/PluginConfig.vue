@@ -1,13 +1,15 @@
 <template>
   <div>
-    <router-view/>
+    <transition name="fade">
+      <router-view/>
+    </transition>
   </div>
 </template>
 
 <script>
 import { basicapi } from "@/apis";
 export default {
-  name: "Config",
+  name: "Config"
 };
 </script>
 

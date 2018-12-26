@@ -44,8 +44,10 @@
       </el-header>
 
       <!-- body -->
-      <el-main>
-        <router-view/>
+      <el-main class="main">
+        <transition name="fade">
+          <router-view/>
+        </transition>
       </el-main>
     </el-container>
 
@@ -134,5 +136,9 @@ export default {
 
 .breadcumb {
   margin: 1em;
+}
+
+.main {
+  min-height: 400px;
 }
 </style>

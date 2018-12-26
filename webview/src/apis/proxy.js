@@ -36,7 +36,7 @@ export function editReverseSrv({ group, id, name, weight, addr }) {
 export function renameReverseSrvGroupName({ group, newname }) {
     return putAPI({
         uri: "/gateapi/plugin/proxy/reversesrv/" + group,
-        params: { newname}
+        params: { newname }
     })
 }
 export function delReverseSrvGroup({ group }) {
@@ -62,4 +62,34 @@ export function editServerRule({ id, prefix, server_name, need_strip_prefix }) {
 
 export function delServerRule({ id }) {
     return deleteAPI({ uri: "/gateapi/plugin/proxy/srvrule/" + id, params: null })
+}
+
+// path rules config api functions
+
+export function getPathRules({ limit, offset }) {
+    return getAPI({ uri: "/gateapi/plugin/proxy/pathrules", params: { limit, offset } })
+}
+
+export function getPathRuleByID({ id }) {
+    return getAPI({ uri: "/gateapi/plugin/proxy/pathrule/" + id, params: null })
+}
+
+export function delPathRule({ id }) {
+    return deleteAPI({ uri: "/gateapi/plugin/proxy/pathrule/" + id, params: null })
+}
+
+export function editPathRule({ id, path, rewrite_path, method, server_name, combine_req_cfgs, need_combine }) {
+    return putAPI({
+        uri: "/gateapi/plugin/proxy/pathrule/" + id,
+        params: { path, rewrite_path, method, server_name, combine_req_cfgs, need_combine },
+        headers: { "Content-Type": "application/json" }
+    })
+}
+
+export function newPathRule({ path, rewrite_path, method, server_name, combine_req_cfgs, need_combine }) {
+    return postAPI({
+        uri: "/gateapi/plugin/proxy/pathrule",
+        params: { path, rewrite_path, method, server_name, combine_req_cfgs, need_combine },
+        headers: { "Content-Type": "application/json" }
+    })
 }

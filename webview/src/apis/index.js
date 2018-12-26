@@ -5,7 +5,7 @@ import * as basicapi from './basic'
 import * as cacheapi from './cache'
 import * as proxyapi from './proxy'
 
-export { basicapi, cacheapi, proxyapi}
+export { basicapi, cacheapi, proxyapi }
 
 export const baseURL = 'http://localhost:8989'
 
@@ -31,7 +31,7 @@ export function resetBaseURL({ baseURL }) {
 instance.interceptors.request.use((config) => {
     return config
 }, (error) => {
-    console.log(error)
+    // console.log(error)
     return Promise.reject(error)
 })
 
@@ -65,30 +65,41 @@ export function getAPI({ uri, params }) {
 }
 
 export function postAPI({ uri, params = null, headers = defaultHeaders }) {
-    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    let p = serializeForm(params)
+    if (isJSONHeader(headers)) {
+        p = params
+    }
     return requestAPI({
         method: 'post',
         url: uri,
-        data: serializeForm(params),
+        data: p,
         responseType: 'json',
         headers: headers
     })
 }
 
-export function deleteAPI({ uri, params = null }) {
+export function deleteAPI({ uri, params = null, headers = defaultHeaders}) {
+    let p = serializeForm(params)
+    if (isJSONHeader(headers)) {
+        p = params
+    }
     return requestAPI({
         method: 'delete',
         url: uri,
-        data: serializeForm(params),
+        data: p,
         responseType: 'json',
     })
 }
 
 export function putAPI({ uri, params = null, headers = defaultHeaders }) {
+    let p = serializeForm(params)
+    if (isJSONHeader(headers)) {
+        p = params
+    }
     return requestAPI({
         method: 'put',
         url: uri,
-        data: serializeForm(params),
+        data: p,
         responseType: 'json',
         headers: headers
     })
@@ -104,4 +115,11 @@ function serializeForm(params) {
     })
 
     return body
+}
+
+function isJSONHeader(headers) {
+    if (!headers || !headers.hasOwnProperty("Content-Type")) {
+        return false
+    }
+    return headers["Content-Type"] === 'application/json'
 }

@@ -1,5 +1,4 @@
 import VueRouter from "vue-router"
-// import HelloWorld from './components/HelloWorld'
 import Dash from './views/Dash'
 import Config from './views/Config'
 import Plugins from './views/Plugins'
@@ -12,6 +11,7 @@ import PathRule from '@/views/configviews/ProxyPath'
 import ServerRule from '@/views/configviews/ProxyServer'
 
 import ReverseServerGroup from '@/components/ReverseServerGroup'
+import PathRuleDetail from '@/components/PathRuleDetail'
 
 
 const router = new VueRouter({
@@ -87,7 +87,13 @@ const router = new VueRouter({
                   path: 'pathrule',
                   component: PathRule,
                   meta: { breadcrumb: 'URI' }
-                }
+                },
+                {
+                  name: 'plugin.proxy.pathrule.detail',
+                  path: 'pathrule/:id',
+                  component: PathRuleDetail,
+                  meta: { breadcrumb: '详情' }
+                },
               ]
             }
           ]
