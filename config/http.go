@@ -87,6 +87,10 @@ func (h *HTTP) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
+	if req.Method == http.MethodOptions {
+		return
+	}
+
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, h.Prefix)
 	handle, params, tsr := h.Lookup(req.Method, req.URL.Path)
 	_, _ = params, tsr

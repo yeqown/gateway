@@ -16,15 +16,17 @@ func (s *Store) NewPathRule(r rule.PathRuler) error {
 		c.SetID(bson.NewObjectId().Hex())
 	}
 	doc := loadPathRulerModelFromPathRuler(r)
+
 	// check dulicated
 	var ex = new(pathRulerModel)
 	if err := s.C(plgProxyPathCollName).
 		Find(bson.M{"path": doc.Path(), "method": doc.Method()}).
-		One(ex); err != nil {
+		One(ex); err == nil {
 		return errRuleExists
 	} else if err != mgo.ErrNotFound {
 		return err
 	}
+
 	if err := s.C(plgProxyPathCollName).Insert(doc); err != nil {
 		return err
 	}
@@ -45,9 +47,27 @@ func (s *Store) DelPathRule(id string) error {
 // UpdatePathRule func ...
 func (s *Store) UpdatePathRule(id string, r rule.PathRuler) error {
 	r.SetID(id)
-	model := loadPathRulerModelFromPathRuler(r)
+	doc := loadPathRulerModelFromPathRuler(r)
+
+	var ex = new(pathRulerModel)
+	s.C(plgProxyPathCollName).FindId(bson.ObjectIdHex(id)).One(ex)
+
+	// 更新其他部分的数据
+	if ex.Path() == doc.Path() && ex.Method() == doc.Method() {
+		// pass
+	} else {
+		// check duplicated
+		if err := s.C(plgProxyPathCollName).
+			Find(bson.M{"path": doc.Path(), "method": doc.Method()}).
+			One(ex); err == nil {
+			return errRuleExists
+		} else if err != mgo.ErrNotFound {
+			return err
+		}
+	}
+
 	if err := s.C(plgProxyPathCollName).
-		UpdateId(bson.ObjectIdHex(id), model); err != nil {
+		UpdateId(bson.ObjectIdHex(id), doc); err != nil {
 		return err
 	}
 	s.notify(presistence.PlgCodeProxyPath)
