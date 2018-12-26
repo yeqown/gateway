@@ -18,7 +18,8 @@
           <el-submenu index="gate.plugin">
             <template slot="title">插件配置</template>
             <el-menu-item index="gate.plugin.cache">缓存插件</el-menu-item>
-            <el-menu-item index="gate.plugin.ratelimit" disabled>限流插件</el-menu-item>
+            <el-menu-item index="gate.plugin.ratelimit" disabled>限流插件(暂不支持配置)</el-menu-item>
+            <el-menu-item index="gate.plugin.httplog" disabled>日志插件(暂不支持配置)</el-menu-item>
             <el-submenu index="gate.plugin.proxy">
               <template slot="title">代理插件</template>
               <el-menu-item index="gate.plugin.proxy.path">路径代理</el-menu-item>
@@ -26,7 +27,7 @@
               <el-menu-item index="gate.plugin.proxy.reverseServer">服务实例组</el-menu-item>
             </el-submenu>
           </el-submenu>
-          <el-menu-item index="gate.plugins">网关插件管理</el-menu-item>
+          <el-menu-item index="gate.plugins">插件管理</el-menu-item>
           <el-menu-item index="gate.repo">
             <a href="https://github.com/yeqown/gateway" target="_blank">Github</a>
           </el-menu-item>
@@ -53,12 +54,12 @@
         Copyright@yeqown 2018
         yeqwon@gmail.com
       </p>
-    </el-footer> -->
+    </el-footer>-->
   </div>
 </template>
 
 <script>
-import {saveBreadcrumbs, loadBreadcrumbs} from './config'
+import { saveBreadcrumbs, loadBreadcrumbs } from "./config";
 export default {
   name: "app",
   data() {
@@ -66,8 +67,8 @@ export default {
       activeIndex: "1",
       breadcrumbs: [
         {
-          name: '导航页',
-          to: '/dashbord'
+          name: "导航页",
+          to: "/dashbord"
         }
       ]
     };
@@ -84,31 +85,36 @@ export default {
           this.$router.push("/configs/basic");
           break;
         case "gate.plugin.cache":
-          this.$router.push("/configs/plugin/cache")
+          this.$router.push("/configs/plugin/cache");
           break;
         case "gate.plugin.proxy.reverseServer":
-          this.$router.push("/configs/plugin/proxy/reverse_server")
+          this.$router.push("/configs/plugin/proxy/reverse_server");
+          break;
+        case "gate.plugin.proxy.path":
+          this.$router.push("/configs/plugin/proxy/pathrule");
+          break;
+        case "gate.plugin.proxy.server":
+          this.$router.push("/configs/plugin/proxy/serverrule");
           break;
         case "gate.plugins":
-          this.$router.push("/plugins")
+          this.$router.push("/plugins");
       }
     }
   },
   watch: {
     $route(newVal, oldVal) {
       if (newVal.params.breadcrumbs) {
-        this.breadcrumbs = newVal.params.breadcrumbs
-        saveBreadcrumbs(this.breadcrumbs)
+        this.breadcrumbs = newVal.params.breadcrumbs;
+        saveBreadcrumbs(this.breadcrumbs);
       }
     }
   },
-  created () {
-    let breadcrumbs = loadBreadcrumbs()
+  created() {
+    let breadcrumbs = loadBreadcrumbs();
     // console.log(breadcrumbs)
     if (breadcrumbs) {
-      this.breadcrumbs = breadcrumbs
+      this.breadcrumbs = breadcrumbs;
     }
-
   }
 };
 </script>

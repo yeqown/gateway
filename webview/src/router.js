@@ -8,6 +8,8 @@ import BaseConfig from './views/configviews/GatewayBasicConf'
 import PluginCache from './views/configviews/PluginCache'
 import PluginProxy from '@/views/configviews/PluginProxy'
 import ReverseServer from '@/views/configviews/ProxyReverseServer'
+import PathRule from '@/views/configviews/ProxyPath'
+import ServerRule from '@/views/configviews/ProxyServer'
 
 import ReverseServerGroup from '@/components/ReverseServerGroup'
 
@@ -54,25 +56,37 @@ const router = new VueRouter({
               name: 'plugin.cache',
               path: 'cache',
               component: PluginCache,
-              meta: { breadcrumb: '缓存' }
+              meta: { breadcrumb: '缓存插件' }
             },
             {
               name: 'plugin.proxy',
               path: 'proxy/',
               component: PluginProxy,
-              meta: { breadcrumb: '代理' },
+              meta: { breadcrumb: '代理插件' },
               children: [
                 {
                   name: 'plugin.proxy.reverseServer',
                   path: 'reverse_server',
                   component: ReverseServer,
-                  meta: { breadcrumb: '反向代理服务器' }
+                  meta: { breadcrumb: '反向代理组' }
                 },
                 {
                   name: 'plugin.proxy.reverseServer.group',
                   path: 'reverse_server/:group',
                   component: ReverseServerGroup,
                   meta: { breadcrumb: '组别详情' }
+                },
+                {
+                  name: 'plugin.proxy.serverrule',
+                  path: 'serverrule',
+                  component: ServerRule,
+                  meta: { breadcrumb: '服务' }
+                },
+                {
+                  name: 'plugin.proxy.pathrule',
+                  path: 'pathrule',
+                  component: PathRule,
+                  meta: { breadcrumb: 'URI' }
                 }
               ]
             }

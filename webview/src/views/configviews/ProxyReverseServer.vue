@@ -6,7 +6,7 @@
       </el-col>
       <el-col :span="1" :offset="21">
         <el-button
-          type="success"
+          type="primary"
           size="small"
           icon="el-icon-plus"
           circle
@@ -14,28 +14,38 @@
         />
       </el-col>
     </el-row>
-    <el-row v-if="groups.length" v-for="(g, idx) in groups" :key="idx" class="group-wrapper">
-      <el-col :span="1">
-        <i class="el-icon-info" style="color:#03a9f4; font-size:1.5em; line-height: 40px"/>
-      </el-col>
-      <el-col :span="4">组别：{{g.name}}</el-col>
-      <el-col :span="4">实例数：{{g.count}}</el-col>
-      <el-col :span="1" :offset="13" style="line-height: 40px">
-        <router-link :to="{path:`reverse_server/${g.name}`, params: {group: g.name}}" class="link">
-          <i class="el-icon-setting" style="color:gray;font-size:1.5em;"/>
-          <!-- 详细 -->
-        </router-link>
-      </el-col>
-      <el-col :span="1">
-        <el-button
-          icon="el-icon-delete"
-          type="danger"
-          size="small"
-          circle
-          @click="hdlDelReverseSrvGroup(g.name)"
-        />
-      </el-col>
-    </el-row>
+    <template v-if="groups && groups.length">
+      <el-row v-for="(g, idx) in groups" :key="idx" class="group-wrapper">
+        <el-col :span="1">
+          <i class="el-icon-info" style="color:#03a9f4; font-size:1.5em; line-height: 40px"/>
+        </el-col>
+        <el-col :span="4">组别：{{g.name}}</el-col>
+        <el-col :span="4">实例数：{{g.count}}</el-col>
+        <el-col :span="1" :offset="13" style="line-height: 40px">
+          <router-link
+            :to="{path:`reverse_server/${g.name}`, params: {group: g.name}}"
+            class="link"
+          >
+            <i class="el-icon-setting" style="color:gray;font-size:1.5em;"/>
+            <!-- 详细 -->
+          </router-link>
+        </el-col>
+        <el-col :span="1">
+          <el-button
+            icon="el-icon-delete"
+            type="danger"
+            size="small"
+            circle
+            @click="hdlDelReverseSrvGroup(g.name)"
+          />
+        </el-col>
+      </el-row>
+    </template>
+    <template v-else>
+      <h2 style="color:gray">
+        <i class="el-icon-info"></i> 暂无配置
+      </h2>
+    </template>
     <!-- new reverse server config dialog -->
     <el-dialog :title="!form.id?'新增实例':'更新实例配置'" :visible.sync="dialogFormVisible" width="500px">
       <el-form ref="refForm" :model="form" label-position="left">
@@ -79,6 +89,8 @@ export default {
   methods: {
     async hdlNewReverseServer() {
       let { name, addr, group, weight } = this.form;
+      this.dialogFormVisible = false;
+      this.resetNewForm()
       await proxyapi
         .newReverseSrv({ name, addr, group, weight })
         .then(data => this.$message.success(data.message))
@@ -109,6 +121,9 @@ export default {
           this.$message.success(data.message);
         })
         .catch(err => this.$notify.error(err.message));
+    },
+    resetNewForm() {
+      this.form = { name: "", addr: "", group: "", weight: "" };
     },
     refresh() {
       this.getReverseSrvGroup();

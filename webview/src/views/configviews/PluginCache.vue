@@ -4,7 +4,7 @@
       <el-col :span="1" :offset="23">
         <el-button
           size="small"
-          type="success"
+          type="primary"
           @click="dialogFormVisible=true"
           icon="el-icon-plus"
           circle
