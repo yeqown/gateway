@@ -3,6 +3,7 @@ BUILD=$(CMD) build
 BIN=gateway
 MAIN=.
 WEBVIEW=webview
+WEBVIEW_TAR=webview.tar
 BUILDOUT=./.build
 
 LINUX=linux
@@ -10,7 +11,7 @@ OSX="osx"
 
 default: clean build
 
-build: build-osx build-linux
+build: build-osx build-linux build-frontend
 	@ echo "build done"
 
 build-linux:
@@ -29,9 +30,10 @@ build-osx:
 
 build-frontend:
 	@ mkdir -p $(BUILDOUT)/$(WEBVIEW)
-	cd $(WEBVIEW) && npm run build 
+	cd $(WEBVIEW) && npm run build
 	mv -f $(WEBVIEW)/dist/* $(BUILDOUT)/$(WEBVIEW)
+	cd $(BUILDOUT)/$(WEBVIEW) && tar -zcvf $(WEBVIEW_TAR) ./*
+	mv $(BUILDOUT)/$(WEBVIEW)/$(WEBVIEW_TAR) $(BUILDOUT)
 
 clean:
-	- cd $(MAIN) rm $(BIN)
-	- cd $(MAIN) rm -fr $(BUILDOUT)
+	- rm -fr $(BUILDOUT)
