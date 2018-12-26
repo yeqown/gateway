@@ -275,6 +275,7 @@ func (p *Proxy) callReverseURI(pr rule.PathRuler, c *plugin.Context) error {
 					Field: comb.Field(),
 					Data:  nil,
 				}
+				return
 			}
 			idx := bla.Distribute()
 			srvCfg, _ := p.srvCfgsMap[utils.Fstring("%s_%d", comb.ServerName(), idx)]
