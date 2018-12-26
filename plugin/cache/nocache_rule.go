@@ -8,7 +8,7 @@ import (
 	"github.com/yeqown/gateway/config/rule"
 )
 
-// no cache rule settings, if the URI macthed any rule in rules
+// Load no cache rule settings, if the URI macthed any rule in rules
 // then abort cache plugin processing
 func (c *Cache) Load(rules []rule.Nocacher) {
 	c.regexps = make([]*regexp.Regexp, len(rules))
@@ -39,10 +39,10 @@ func (c *Cache) matchNoCacheRule(uri string) bool {
 		// fmt.Printf("reg: %s matched\n", reg.String())
 		go func(ctx context.Context, reg *regexp.Regexp, c chan<- bool) {
 			// to catch send on close channel
-			go func() { recover() }()
+			defer func() { recover() }()
 			select {
 			case <-ctx.Done():
-				println("timeout matchNoCacheRule")
+				// println("timeout matchNoCacheRule")
 				break
 			default:
 				c <- reg.MatchString(uri)
