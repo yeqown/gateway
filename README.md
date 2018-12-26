@@ -1,105 +1,33 @@
 # gateway
 
-api gateway for golang http server.
+API网关程序，用于实现多个服务访问控制，精简单个服务的功能。主要功能参见: [主要功能](#主要功能)
+
+## 安装使用
+
+1. 下载二进制文件
+2. 下载对应前端打包文件
 
 ## Todos
 
-- [x] HTTP reverse proxy 
-- [x] HTTP Cache, support URI with query param and post form
-- [ ] Expansion, support leader node and slave
-- [ ] Permission, RBAC mode
-- [x] Ratelimit, token bucket alg
-- [ ] Plugin Switch and status watching
-- [ ] config reload automatic or manually
+- [x] HTTP反向代理及负载均衡
+- [x] API缓存支持POST，PUT等带有body的请求
+- [ ] 横向扩展master-slave 模式
+- [ ] 权限管理（RBAC）
+- [x] 流量控制（令牌桶算法）
+- [x] 插件模式（支持动态关闭与开启）
+- [x] 插件配置及时更新，不需重启网关加载
+- [ ] 支持Docker部署
+- [ ] 添加更多的测试代码，hah
 
-## JSON Config file
+## 开发环境
 
-just run a binary file and do some config so you can just run it easily. proxy config likes: `config.proxy.json`
-```json
-{
-    "port": 8989,
-    "logpath": "./logs",
-    "proxy_config": {
-        "path_rules": [
-            {
-                "path": "/gw/name",
-                "rewrite_path": "/srv/name",
-                "method": "GET",
-                "server_name": "srv1",
-                "combine_req_cfgs": [],
-                "need_combine": false
-            },
-            {
-                "path": "/gw/id",
-                "rewrite_path": "/srv/id",
-                "method": "GET,POST",
-                "server_name": "srv1",
-                "combine_req_cfgs": [],
-                "need_combine": false
-            },
-            {
-                "path": "/gw/combine",
-                "rewrite_path": "",
-                "method": "GET",
-                "server_name": "",
-                "combine_req_cfgs": [
-                    {
-                        "server_name": "srv1",
-                        "path": "/srv/id",
-                        "field": "combine_id",
-                        "method": "GET"
-                    },
-                    {
-                        "server_name": "srv1",
-                        "path": "/srv/name",
-                        "field": "combine_name",
-                        "method": "POST"
-                    }
-                ],
-                "need_combine": true
-            }
-        ],
-        "server_rules": [
-            {
-                "prefix": "/srv",
-                "server_name": "srv1",
-                "need_strip_prefix": false
-            },
-            {
-                "prefix": "/striprefix",
-                "server_name": "srv1",
-                "need_strip_prefix": true
-            }
-        ],
-        "reverse_server_cfgs": {
-            "custom_group1": [
-                {
-                    "name": "srv1",
-                    "prefix": "/srv",
-                    "addr": "127.0.0.1:8081",
-                    "weight": 5
-                },
-                {
-                    "name": "srv1",
-                    "prefix": "/srv",
-                    "addr": "127.0.0.1:8082",
-                    "weight": 5
-                }
-            ]
-        }
-    },
-    "cacheno_rules": [
-        {
-            "regular": "^/api/id$"
-        }
-    ]
-}
-```
+* MongoDB
+* Go1.11.1
+* Node v1.10.1 (npm: 6.4.1)
 
-server config likes: `github.com/yeqown/gateway.server.json`
-```json
-{
-    "host": "127.0.0.1",
-    "port": "9898"
-}
-```
+## 主要功能
+
+### 1. 代理
+#### 1.1 URI直接代理
+#### 1.2 URI组合代理
+#### 1.3 Server代理
