@@ -1,6 +1,8 @@
 <template>
   <div>
-    <router-view/>
+    <transition name="fade">
+      <router-view/>
+    </transition>
     <template v-if="current">
       <el-row :gutter="1" class="row">
         <el-col :span="8" key="gate.basic" :offset="3">

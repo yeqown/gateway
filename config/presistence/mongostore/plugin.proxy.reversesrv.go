@@ -5,6 +5,7 @@ import (
 
 	"github.com/yeqown/gateway/config/presistence"
 	"github.com/yeqown/gateway/config/rule"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -20,6 +21,16 @@ const plgPorxyReverseSrvCollName = "plg_proxy_reverse_srv"
 func (s *Store) NewReverseServer(group string, r rule.ReverseServer) error {
 	r.SetID(bson.NewObjectId().Hex())
 	doc := loadReverseServerModelFromReverseServer(r)
+	// check duplicate
+	var ex = new(reverseServerModel)
+	if err := s.C(plgPorxyReverseSrvCollName).
+		Find(bson.M{"group": doc.Group(), "server_name": doc.Name()}).
+		One(ex); err == nil {
+		return errRuleExists
+	} else if err != mgo.ErrNotFound {
+		return err
+	}
+
 	if err := s.C(plgPorxyReverseSrvCollName).Insert(doc); err != nil {
 		return err
 	}
@@ -39,8 +50,8 @@ func (s *Store) DelReverseServer(id string) error {
 
 // DelReverseServerGroup func
 func (s *Store) DelReverseServerGroup(group string) error {
-	if err := s.C(plgPorxyReverseSrvCollName).
-		Remove(bson.M{"group": group}); err != nil {
+	if _, err := s.C(plgPorxyReverseSrvCollName).
+		RemoveAll(bson.M{"group": group}); err != nil {
 		return err
 	}
 	s.notify(presistence.PlgCodeProxyReverseSrv)
@@ -49,6 +60,17 @@ func (s *Store) DelReverseServerGroup(group string) error {
 
 // UpdateReverseServerGroupName ...
 func (s *Store) UpdateReverseServerGroupName(group string, newname string) error {
+	if group == newname {
+		return nil
+	}
+	var ex = new(reverseServerModel)
+	if err := s.C(plgPorxyReverseSrvCollName).
+		Find(bson.M{"group": newname}).One(ex); err == nil {
+		return errRuleExists
+	} else if err != mgo.ErrNotFound {
+		return err
+	}
+
 	changeInfo, err := s.C(plgPorxyReverseSrvCollName).
 		UpdateAll(bson.M{"group": group}, bson.M{"group": newname})
 

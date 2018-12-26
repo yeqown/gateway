@@ -80,6 +80,12 @@ func (e *Engine) initPluginManageRouter() {
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, e.prefix)
+
+	// cors setting
+	w.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	handle, params, tsr := e.plgapi.Lookup(req.Method, req.URL.Path)
 	_ = tsr
 	if handle != nil {

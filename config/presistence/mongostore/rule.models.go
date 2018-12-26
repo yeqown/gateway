@@ -46,6 +46,9 @@ func (c *combinerModel) Path() string       { return c.PPath }
 func (c *combinerModel) Field() string      { return c.FField }
 func (c *combinerModel) Method() string     { return c.MMethod }
 func loadCombinerModelFromCombiner(r rule.Combiner) *combinerModel {
+	if len(r.ID()) == 0 {
+		r.SetID(bson.NewObjectId().Hex())
+	}
 	return &combinerModel{
 		Idx:         bson.ObjectIdHex(r.ID()),
 		SServerName: r.ServerName(),

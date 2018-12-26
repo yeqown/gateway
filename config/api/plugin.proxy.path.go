@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/utils"
 	"github.com/yeqown/server-common/code"
 )
@@ -93,6 +94,8 @@ func ProxyConfigPathPOST(w http.ResponseWriter, req *http.Request, param httprou
 		ResponseWithError(w, resp, err)
 		return
 	}
+
+	logger.Logger.Infof("request with body: %v", form)
 
 	if err := Global().NewPathRule(form); err != nil {
 		ResponseWithError(w, resp, err)

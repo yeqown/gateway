@@ -1,11 +1,13 @@
 import axios from 'axios'
 // import queryString from 'query-string'
-import { Message } from 'element-ui'
+import { Notification } from 'element-ui'
 import * as basicapi from './basic'
 import * as cacheapi from './cache'
-export { basicapi, cacheapi }
+import * as proxyapi from './proxy'
 
-export const baseURL = 'http://localhost:8989/gateapi'
+export { basicapi, cacheapi, proxyapi }
+
+export const baseURL = 'http://localhost:8989'
 
 var defaultHeaders = {};
 
@@ -17,7 +19,7 @@ var defaultHeaders = {};
 var instance = axios.create({
     baseURL: baseURL,
     timeout: 5000,
-    headers: {},
+    headers: defaultHeaders,
 })
 
 // resetBaseURL
@@ -29,7 +31,7 @@ export function resetBaseURL({ baseURL }) {
 instance.interceptors.request.use((config) => {
     return config
 }, (error) => {
-    console.log(error)
+    // console.log(error)
     return Promise.reject(error)
 })
 
@@ -39,6 +41,7 @@ instance.interceptors.response.use((response) => {
         throw Error("wrong status got, " + response.status)
     }
     if (response.data.code !== 0) {
+        Notification.error(response.data.message)
         throw Error(response.data.message)
     }
     return response.data
@@ -61,42 +64,62 @@ export function getAPI({ uri, params }) {
     })
 }
 
-export function postAPI({ uri, params, headers = defaultHeaders }) {
-    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+export function postAPI({ uri, params = null, headers = defaultHeaders }) {
+    let p = serializeForm(params)
+    if (isJSONHeader(headers)) {
+        p = params
+    }
     return requestAPI({
-        method: 'get',
+        method: 'post',
         url: uri,
-        data: serializeForm(params),
+        data: p,
         responseType: 'json',
         headers: headers
     })
 }
 
-export function deleteAPI({ uri, params }) {
+export function deleteAPI({ uri, params = null, headers = defaultHeaders}) {
+    let p = serializeForm(params)
+    if (isJSONHeader(headers)) {
+        p = params
+    }
     return requestAPI({
         method: 'delete',
         url: uri,
-        data: serializeForm(params),
+        data: p,
         responseType: 'json',
     })
 }
 
-export function putAPI({ uri, params, headers = defaultHeaders }) {
+export function putAPI({ uri, params = null, headers = defaultHeaders }) {
+    let p = serializeForm(params)
+    if (isJSONHeader(headers)) {
+        p = params
+    }
     return requestAPI({
         method: 'put',
         url: uri,
-        data: serializeForm(params),
+        data: p,
         responseType: 'json',
         headers: headers
     })
 }
 
 function serializeForm(params) {
+    if (!params) {
+        return new FormData()
+    }
     let body = new FormData()
-
     Object.keys(params).map(key => {
         body.append(key, params[key])
     })
 
     return body
+}
+
+function isJSONHeader(headers) {
+    if (!headers || !headers.hasOwnProperty("Content-Type")) {
+        return false
+    }
+    return headers["Content-Type"] === 'application/json'
 }
