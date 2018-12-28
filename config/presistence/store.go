@@ -50,6 +50,7 @@ type Instance struct {
 	ProxyPathRules      []rule.PathRuler                `json:"path_rules"`
 	ProxyReverseServers map[string][]rule.ReverseServer `json:"reverse_servers"`
 	Nocache             []rule.Nocacher                 `json:"nocache_rule"`
+	Users               []rule.User                     `json:"users"`
 }
 
 // Store ... to add, del, query, update config rule ~
@@ -58,6 +59,11 @@ type Store interface {
 	PathRulerManager
 	ReverseServerManager
 	NocacherManager
+
+	PermissionManager
+	RoleManager
+	UserManager
+	PermitURLManager
 
 	// Instance get global config instance
 	Instance() *Instance
@@ -126,4 +132,40 @@ type NocacherManager interface {
 	NocacheRules(offset, limit int) ([]rule.Nocacher, int)
 	// NocacheRuleByID ...
 	NocacheRuleByID(id string) rule.Nocacher
+}
+
+// PermissionManager rule.Permission manage funcs
+type PermissionManager interface {
+	NewPermission(r rule.Permission) error
+	DelPermission(id string) error
+	EditPermission(id string, r rule.Permission) error
+	PermissionPage(limit, offset int) ([]rule.Permission, int)
+}
+
+// RoleManager rule.Role manage funcs
+type RoleManager interface {
+	NewRole(r rule.Role) error
+	DelRole(id string) error
+	EditRole(id string, r rule.Role) error
+	RolePage(limit, offset int) ([]rule.Role, int)
+	AssignPerm(id string, permids ...string) error
+	RevokePerm(id string, permids ...string) error
+}
+
+// UserManager rule.User manage funcs
+type UserManager interface {
+	NewUser(r rule.User) error
+	DelUser(id string) error
+	EditUser(id string, r rule.User) error
+	UserPage(limit, offset int) ([]rule.User, int)
+	AssignRole(id, roleid string) error
+	RevokeRole(id, roleid string) error
+}
+
+// PermitURLManager rule.PermitURL manage funcs
+type PermitURLManager interface {
+	NewPermitURL(r rule.PermitURL) error
+	DelPermitURL(id string) error
+	EditPermitURL(id string, r rule.PermitURL) error
+	PermitURLPage(limit, offset int) ([]rule.PermitURL, int)
 }

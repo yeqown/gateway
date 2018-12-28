@@ -11,8 +11,14 @@ var (
 	_ rule.Combiner      = &combinerModel{}
 	_ rule.ServerRuler   = &serverRulerModel{}
 	_ rule.ReverseServer = &reverseServerModel{}
+
+	_ rule.Permission = &permissionModel{}
+	_ rule.Role       = &roleModel{}
+	_ rule.User       = &userModel{}
+	_ rule.PermitURL  = &permitURLModel{}
 )
 
+// structs for plugin.proxy
 type nocacherModel struct {
 	Idx      bson.ObjectId `bson:"_id"`
 	Regexp   string        `bson:"regular"`
@@ -141,5 +147,192 @@ func loadReverseServerModelFromReverseServer(r rule.ReverseServer) *reverseServe
 		AAddr:  r.Addr(),
 		WW:     r.W(),
 		GGroup: r.Group(),
+	}
+}
+
+// struct for RBAC plugins
+
+type permissionModel struct {
+	Idx       bson.ObjectId `bson:"_id"`
+	AAction   string        `bson:"action"`
+	RResource string        `bson:"resource"`
+}
+
+func (p *permissionModel) ID() string       { return p.Idx.Hex() }
+func (p *permissionModel) SetID(id string)  { p.Idx = bson.ObjectIdHex(id) }
+func (p *permissionModel) Action() string   { return p.AAction }
+func (p *permissionModel) Resource() string { return p.RResource }
+func (p *permissionModel) Match(other rule.Permission) bool {
+	if p.ID() == other.ID() {
+		return true
+	}
+	return p.AAction == other.Action() && p.RResource == other.Resource()
+}
+func loadPermissionModelFromPermission(r rule.Permission) *permissionModel {
+	return &permissionModel{
+		Idx:       bson.ObjectIdHex(r.ID()),
+		AAction:   r.Action(),
+		RResource: r.Resource(),
+	}
+}
+
+type roleModel struct {
+	Idx         bson.ObjectId              `bson:"_id"`
+	PermIDs     []bson.ObjectId            `bson:"perm_ids"`
+	permissions map[string]rule.Permission `bson:"-"`
+	NName       string                     `bson:"name"`
+}
+
+func (r *roleModel) ID() string      { return r.Idx.Hex() }
+func (r *roleModel) SetID(id string) { r.Idx = bson.ObjectIdHex(id) }
+func (r *roleModel) Name() string    { return r.NName }
+func (r *roleModel) Permissions() []rule.Permission {
+	perms := make([]rule.Permission, len(r.permissions))
+	counter := 0
+	for _, v := range r.permissions {
+		perms[counter] = v
+		counter++
+	}
+	return perms
+}
+func (r *roleModel) Assign(perms ...rule.Permission) error {
+	for _, perm := range perms {
+		if _, ex := r.permissions[perm.ID()]; ex {
+			continue
+		}
+		r.permissions[perm.ID()] = perm
+		r.PermIDs = append(r.PermIDs, bson.ObjectIdHex(perm.ID()))
+	}
+	return nil
+}
+func (r *roleModel) Revoke(perm rule.Permission) error {
+	delete(r.permissions, perm.ID())
+
+	delIdx := -1
+	for idx, v := range r.PermIDs {
+		if v.Hex() == perm.ID() {
+			delIdx = idx
+			break
+		}
+	}
+	if delIdx == -1 || delIdx > len(r.PermIDs) {
+		return nil
+	}
+	r.PermIDs = append(r.PermIDs[:delIdx], r.PermIDs[delIdx+1:]...)
+	return nil
+}
+func (r *roleModel) Permit(perm rule.Permission) bool {
+	var rslt bool
+	for _, p := range r.permissions {
+		if p.Match(perm) {
+			rslt = true
+			break
+		}
+	}
+	return rslt
+}
+func loadRoleModelFromRole(r rule.Role) *roleModel {
+	// log.Printf("%v, %v", r, r.Permissions())
+	oriPerms := r.Permissions()
+	ids := make([]bson.ObjectId, len(oriPerms))
+	perms := make(map[string]rule.Permission)
+	for idx, perm := range r.Permissions() {
+		ids[idx] = bson.ObjectIdHex(perm.ID())
+		perms[perm.ID()] = perm
+	}
+
+	return &roleModel{
+		Idx:         bson.ObjectIdHex(r.ID()),
+		permissions: perms,
+		PermIDs:     ids,
+		NName:       r.Name(),
+	}
+}
+
+type userModel struct {
+	Idx      bson.ObjectId        `bson:"_id"`
+	UUserID  string               `bson:"user_id"`
+	RoleIDs  []bson.ObjectId      `bson:"role_ids"`
+	RolesMap map[string]rule.Role `bson:"-"`
+}
+
+func (u *userModel) ID() string      { return u.Idx.Hex() }
+func (u *userModel) SetID(id string) { u.Idx = bson.ObjectIdHex(id) }
+func (u *userModel) UserID() string  { return u.UUserID }
+func (u *userModel) Roles() []rule.Role {
+	roles := make([]rule.Role, len(u.RolesMap))
+	counter := 0
+	for _, v := range u.RolesMap {
+		roles[counter] = v
+		counter++
+	}
+	return roles
+}
+
+func (u *userModel) Assign(roles ...rule.Role) error {
+	for _, role := range roles {
+		if _, ex := u.RolesMap[role.ID()]; ex {
+			continue
+		}
+		u.RolesMap[role.ID()] = role
+		u.RoleIDs = append(u.RoleIDs, bson.ObjectIdHex(role.ID()))
+	}
+	return nil
+}
+
+func (u *userModel) Revoke(role rule.Role) error {
+	delete(u.RolesMap, role.ID())
+
+	delIdx := -1
+	for idx, roleID := range u.RoleIDs {
+		if roleID.Hex() == role.ID() {
+			delIdx = idx
+			break
+		}
+	}
+	if delIdx == -1 || delIdx > len(u.RoleIDs) {
+		return nil
+	}
+	u.RoleIDs = append(u.RoleIDs[:delIdx], u.RoleIDs[delIdx+1:]...)
+	return nil
+}
+
+// func (u *userModel) Permit(perm rule.Permission) bool {}
+func loadUserModelFromUser(r rule.User) *userModel {
+	roles := r.Roles()
+	roleIDs := make([]bson.ObjectId, len(roles))
+	roleMap := make(map[string]rule.Role)
+
+	for idx, role := range roles {
+		roleIDs[idx] = bson.ObjectIdHex(role.ID())
+		roleMap[role.ID()] = loadRoleModelFromRole(role)
+	}
+
+	return &userModel{
+		Idx:      bson.ObjectIdHex(r.ID()),
+		UUserID:  r.UserID(),
+		RoleIDs:  roleIDs,
+		RolesMap: roleMap,
+	}
+}
+
+type permitURLModel struct {
+	Idx    bson.ObjectId   `bson:"_id"`
+	PermID bson.ObjectId   `bson:"perm_id"`
+	Perm   rule.Permission `bson:"-"`
+	URI    string          `bson:"url"`
+}
+
+func (u *permitURLModel) ID() string                  { return u.Idx.Hex() }
+func (u *permitURLModel) SetID(id string)             { u.Idx = bson.ObjectIdHex(id) }
+func (u *permitURLModel) URL() string                 { return u.URI }
+func (u *permitURLModel) Permission() rule.Permission { return u.Perm }
+func loadPermitURLModelFormPermitURL(r rule.PermitURL) *permitURLModel {
+	permID := bson.ObjectIdHex(r.Permission().ID())
+	return &permitURLModel{
+		Idx:    bson.ObjectIdHex(r.ID()),
+		PermID: permID,
+		Perm:   r.Permission(),
+		URI:    r.URL(),
 	}
 }

@@ -63,8 +63,8 @@ func ParseURIPrefix(uri string) string {
 }
 
 // EncodeFormToString ... you must copy http.Request manually
-func EncodeFormToString(req *http.Request) string {
-	form := ParseRequestForm(req)
+func EncodeFormToString(form url.Values) string {
+	// form := ParseRequestForm(req)
 	buffer := bytes.NewBufferString(form.Encode())
 	return hex.EncodeToString(buffer.Bytes())
 }

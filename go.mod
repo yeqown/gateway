@@ -6,7 +6,10 @@ require (
 	github.com/gorilla/schema v1.0.2
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/leodido/go-urn v1.1.0 // indirect
+	github.com/lib/pq v1.0.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/prometheus/common v0.0.0-20180518154759-7600349dcfe1
+	github.com/yeqown/gweb v0.0.0-20180607041601-fab8377433ea
 	github.com/yeqown/server-common v0.0.0-20181120124820-9be8029d3a4a
 	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 // indirect
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a // indirect

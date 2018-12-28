@@ -27,9 +27,6 @@ type Engine struct {
 	Logger *log.Logger // inner logger
 
 	plgapi *httprouter.Router // plugin manage api router
-
-	// cfgAPI        *config.HTTP                   // config api handler
-	// StoreChangedC <-chan presistence.ChangedChan // store changed channel
 }
 
 func (e *Engine) use(plgs ...plugin.Plugin) {
@@ -37,8 +34,7 @@ func (e *Engine) use(plgs ...plugin.Plugin) {
 	e.numAllPlugin += len(plgs)
 }
 
-// 启用或者禁用插件
-//
+// enablePlugin 启用或者禁用插件
 func (e *Engine) enablePlugin(enabled bool, pluginIdx int) {
 	// Proxy 插件不允许禁用
 	if pluginIdx == (e.numAllPlugin - 1) {
@@ -58,19 +54,6 @@ func (e *Engine) init(addr string) {
 	e.initPluginManageRouter()
 }
 
-// func (e *Engine) initActivePlugins() {
-// 	e.activePlugins = make([]plugin.Plugin, 0, e.numAllPlugin)
-// 	e.activePluginsName = make([]string, 0, e.numAllPlugin)
-// 	e.numActivePlugin = 0
-// 	for _, plg := range e.allPlugins {
-// 		// e.pluginStatus[idx] = plg.Status()
-// 		if plg.Enabled() {
-// 			e.numActivePlugin++
-// 			e.activePlugins = append(e.activePlugins, plg)
-// 			e.activePluginsName = append(e.activePluginsName, plg.Name())
-// 		}
-// 	}
-// }
 
 func (e *Engine) initPluginManageRouter() {
 	e.plgapi = httprouter.New()

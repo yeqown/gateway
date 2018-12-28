@@ -21,6 +21,11 @@ var (
 	_ rule.ServerRuler = &apiServerRuler{}
 	_ rule.Nocacher    = &apiNocacher{}
 	_ rule.Combiner    = &apiCombReqCfg{}
+
+	_ rule.Permission = &apiPermission{}
+	_ rule.Role       = &apiRole{}
+	_ rule.PermitURL  = &apiPermitURL{}
+	_ rule.User       = &apiUser{}
 )
 
 func init() {
@@ -225,5 +230,121 @@ func loadFromNocacher(r rule.Nocacher) *apiNocacher {
 		Regexp:   r.Regular(),
 		Idx:      r.ID(),
 		EEnabled: r.Enabled(),
+	}
+}
+
+// rbac support structs
+
+type apiPermission struct {
+	Idx       string `json:"id" form:"-" valid:"-"`
+	AAction   string `json:"action" form:"action" valid:"required"`
+	RResource string `json:"resource" form:"resource" valid:"required"`
+}
+
+func (p *apiPermission) ID() string                       { return p.Idx }
+func (p *apiPermission) SetID(id string)                  { p.Idx = id }
+func (p *apiPermission) Action() string                   { return p.AAction }
+func (p *apiPermission) Resource() string                 { return p.RResource }
+func (p *apiPermission) Match(other rule.Permission) bool { panic("not Implemented") }
+func loadFromPermission(r rule.Permission) *apiPermission {
+	return &apiPermission{
+		Idx:       r.ID(),
+		AAction:   r.Action(),
+		RResource: r.Resource(),
+	}
+}
+
+type apiRole struct {
+	Idx     string           `json:"id" form:"-" valid:"-"`
+	Perms   []*apiPermission `json:"permissions" form:"-" valid:"-"`
+	PermIDs []string         `json:"-" form:"perm_ids" valid:"required"`
+	NName   string           `json:"name" form:"name" valid:"required"`
+}
+
+func (p *apiRole) ID() string                            { return p.Idx }
+func (p *apiRole) SetID(id string)                       { p.Idx = id }
+func (p *apiRole) Name() string                          { return p.NName }
+func (p *apiRole) Permit(perm rule.Permission) bool      { panic("not Implemented") }
+func (p *apiRole) Assign(perms ...rule.Permission) error { panic("not Implemented") }
+func (p *apiRole) Revoke(prem rule.Permission) error     { panic("not Implemented") }
+func (p *apiRole) Permissions() []rule.Permission {
+	// log.Printf("permissions: %v", *p)
+	rules := make([]rule.Permission, len(p.PermIDs))
+	for idx, permID := range p.PermIDs {
+		rules[idx] = &apiPermission{
+			Idx: permID,
+		}
+	}
+	return rules
+}
+func loadFormRole(r rule.Role) *apiRole {
+	// log.Printf("api load role: %v", r)
+	permissions := r.Permissions()
+	perms := make([]*apiPermission, len(permissions))
+	for idx, perm := range permissions {
+		perms[idx] = loadFromPermission(perm)
+	}
+	return &apiRole{
+		Idx:   r.ID(),
+		Perms: perms,
+		NName: r.Name(),
+	}
+}
+
+type apiUser struct {
+	Idx     string     `json:"id" form:"-" valid:"-"`
+	UUserID string     `json:"user_id" form:"user_id" valid:"required"`
+	RoleIDs []string   `json:"-" form:"role_ids" valid:"required"`
+	RRoles  []*apiRole `json:"roles" form:"-" valid:"-"`
+}
+
+func (p *apiUser) ID() string                      { return p.Idx }
+func (p *apiUser) SetID(id string)                 { p.Idx = id }
+func (p *apiUser) UserID() string                  { return p.UUserID }
+func (p *apiUser) Assign(roles ...rule.Role) error { panic("not Implemented") }
+func (p *apiUser) Revoke(role rule.Role) error     { panic("not Implemented") }
+func (p *apiUser) Roles() []rule.Role {
+	rules := make([]rule.Role, len(p.RoleIDs))
+	for idx, roleID := range p.RoleIDs {
+		rules[idx] = &apiRole{
+			Idx: roleID,
+		}
+	}
+	return rules
+}
+func loadFormUser(r rule.User) *apiUser {
+	oriRoles := r.Roles()
+	roles := make([]*apiRole, len(oriRoles))
+	for idx, role := range oriRoles {
+		roles[idx] = loadFormRole(role)
+	}
+	return &apiUser{
+		Idx:     r.ID(),
+		UUserID: r.UserID(),
+		RRoles:  roles,
+	}
+}
+
+type apiPermitURL struct {
+	Idx    string         `json:"id" form:"id" valid:"-"`
+	URI    string         `json:"uri" form:"uri" valid:"required"`
+	Perm   *apiPermission `json:"permission" form:"-"`
+	PermID string         `json:"-" form:"perm_id" valid:"required"`
+}
+
+func (p *apiPermitURL) ID() string      { return p.Idx }
+func (p *apiPermitURL) SetID(id string) { p.Idx = id }
+func (p *apiPermitURL) URL() string     { return p.URI }
+func (p *apiPermitURL) Permission() rule.Permission {
+	return &apiPermission{
+		Idx: p.PermID,
+	}
+}
+func loadFormPermitURL(r rule.PermitURL) *apiPermitURL {
+	return &apiPermitURL{
+		Idx:    r.ID(),
+		URI:    r.URL(),
+		PermID: r.Permission().ID(),
+		Perm:   loadFromPermission(r.Permission()),
 	}
 }

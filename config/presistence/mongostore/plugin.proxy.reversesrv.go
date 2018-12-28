@@ -134,7 +134,7 @@ func (s *Store) ReverseServerGroups() map[string]int {
 		panic(err)
 	}
 
-	log.Println(groupNames)
+	// log.Println(groupNames)
 
 	for _, name := range groupNames {
 		cnt, err := s.C(plgPorxyReverseSrvCollName).

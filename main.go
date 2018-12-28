@@ -16,6 +16,7 @@ import (
 	"github.com/yeqown/gateway/plugin/httplog"
 	"github.com/yeqown/gateway/plugin/proxy"
 	"github.com/yeqown/gateway/plugin/ratelimit"
+	"github.com/yeqown/gateway/plugin/rbac"
 )
 
 var (
@@ -44,6 +45,7 @@ func main() {
 	plgHTTPLogger := httplog.New(logger.Logger)
 	plgCache := cache.New(presistence.NewInMemoryStore(), cfg.Nocache)
 	plgTokenBucket := ratelimit.New(10, 1)
+	plgRBAC := rbac.New("user_id", cfg.Users)
 
 	go func(changedC <-chan configpresistence.ChangedChan) {
 		for {
@@ -74,7 +76,7 @@ func main() {
 	}
 
 	// TODO: load with active plugin names list
-	e.use(plgHTTPLogger, plgTokenBucket, plgCache, plgProxy)
+	e.use(plgHTTPLogger, plgTokenBucket, plgRBAC, plgCache, plgProxy)
 
 	addr := fmt.Sprintf(":%d", *port)
 	if err := e.ListenAndServe(addr); err != nil {

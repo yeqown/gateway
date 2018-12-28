@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+
+	"github.com/yeqown/gateway/utils"
 )
 
 // PlgStatus ...
@@ -35,11 +38,13 @@ func New(w http.ResponseWriter, req *http.Request,
 ) *Context {
 	method := req.Method
 	path := req.URL.Path
+	cpyReq := utils.CopyRequest(req)
 
 	return &Context{
 		Ctx:       req.Context(),
 		Method:    method,
 		Path:      path,
+		Form:      utils.ParseRequestForm(cpyReq),
 		numPlugin: numPlugin,
 		plugins:   plugins,
 		pluginIdx: -1,
@@ -54,6 +59,7 @@ type Context struct {
 	Ctx    context.Context // ctx control signal for multi goroutine
 	Method string          // request method
 	Path   string          // request Path
+	Form   url.Values      // request parsed form
 
 	req *http.Request
 	w   http.ResponseWriter

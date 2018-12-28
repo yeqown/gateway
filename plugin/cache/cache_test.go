@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/yeqown/gateway/utils"
 )
 
 func Test_responseCache_Encode_Decode(t *testing.T) {
@@ -109,7 +111,9 @@ func Test_generateKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := generateKey(tt.args.req, tt.args.serializeForm); got != tt.want {
+			uri := tt.args.req.RequestURI
+			form := utils.ParseRequestForm(tt.args.req)
+			if got := generateKey(uri, form, tt.args.serializeForm); got != tt.want {
 				t.Errorf("generateKey() = %v, want %v", got, tt.want)
 			}
 		})

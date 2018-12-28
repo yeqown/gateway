@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/yeqown/gateway/plugin"
-	"github.com/yeqown/gateway/utils"
 	log "github.com/yeqown/server-common/logger"
 )
 
@@ -49,19 +48,15 @@ func (h *HTTPLogger) Handle(ctx *plugin.Context) {
 
 	// timer
 	start := time.Now()
-	path := ctx.Path
-	cpyReq := utils.CopyRequest(ctx.Request())
-	fields := make(map[string]interface{})
-
 	// continue process
 	ctx.Next()
-
+	path := ctx.Path
 	end := time.Now()
 	latency := end.Sub(start)
 	clientIP := ctx.Request().RemoteAddr
-	// set request
-	fields["requestForm"] = utils.ParseRequestForm(cpyReq)
-	// need to log response
+	fields := make(map[string]interface{})
+
+	fields["requestForm"] = ctx.Form
 	if h.logResponse {
 		// set response
 		fields["responseBody"] = rbw.body.String()

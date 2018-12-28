@@ -136,18 +136,18 @@ type Cache struct {
 
 // generate a key with the given http.Request and serializeForm flag
 // [done] TODO: post method URI need to be cached or not? serialize the form with URI can solve this?
-func generateKey(req *http.Request, serializeForm bool) string {
+func generateKey(URI string, form url.Values, serializeForm bool) string {
 	var (
-		cpyReq     *http.Request
+		// cpyReq     *http.Request
 		formEncode string
 	)
 	if serializeForm {
-		cpyReq = utils.CopyRequest(req)
-		formEncode = utils.EncodeFormToString(cpyReq)
-		return urlEscape(CachePluginKey, req.URL.RequestURI(), formEncode)
+		// cpyReq = utils.CopyRequest(req)
+		formEncode = utils.EncodeFormToString(form)
+		return urlEscape(CachePluginKey, URI, formEncode)
 	}
 
-	return urlEscape(CachePluginKey, req.URL.RequestURI())
+	return urlEscape(CachePluginKey, URI)
 }
 
 func urlEscape(prefix, u string, extern ...string) string {
@@ -179,7 +179,7 @@ func (c *Cache) Handle(ctx *plugin.Context) {
 	}
 
 	logger.Logger.Info("plugin.Cache is working")
-	key := generateKey(ctx.Request(), c.serializeForm)
+	key := generateKey(ctx.Request().URL.RequestURI(), ctx.Form, c.serializeForm)
 	if c.store.Exists(key) {
 		// if exists key then load from cache and then
 		// write to http.ResponseWriter

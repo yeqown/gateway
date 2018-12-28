@@ -67,6 +67,31 @@ func (h *HTTP) initRouter() {
 	h.PUT("/plugin/cache/rule/:id", api.CacheConfigPUT)
 	h.DELETE("/plugin/cache/rule/:id", api.CacheConfigDELETE)
 
+	// rbac permissions
+	h.GET("/plugin/rbac/perms", api.PermissionsGET)
+	h.POST("/plugin/rbac/perm", api.PermissionPOST)
+	h.PUT("/plugin/rbac/perm/:id", api.PermissionPUT)
+	h.DELETE("/plugin/rbac/perm/:id", api.PermissionDELETE)
+	// rbac role
+	h.GET("/plugin/rbac/roles", api.RolesGET)
+	h.POST("/plugin/rbac/role", api.RolePOST)
+	h.PUT("/plugin/rbac/role/:id", api.RolePUT)
+	// h.POST("/plugin/rbac/role/:id/assign", api.RoleAssignPermPOST)
+	// h.POST("/plugin/rbac/role/:id/revoke", api.RoleRevokePermPOST)
+	h.DELETE("/plugin/rbac/role/:id", api.RoleDELETE)
+	// rbac permitURL
+	h.GET("/plugin/rbac/permiturls", api.PermitURLsGET)
+	h.POST("/plugin/rbac/permiturl", api.PermitURLPOST)
+	h.PUT("/plugin/rbac/permiturl/:id", api.PermitURLPUT)
+	h.DELETE("/plugin/rbac/permiturl/:id", api.PermitURLDELETE)
+	// rbac user
+	h.GET("/plugin/rbac/users", api.UsersGET)
+	h.POST("/plugin/rbac/user", api.UserPOST)
+	h.PUT("/plugin/rbac/user/:id", api.UserPUT)
+	// h.POST("/plugin/rbac/user/:id/assign", api.UserAssignRolePOST)
+	// h.POST("/plugin/rbac/user/:id/revoke", api.UserRevokeRolePOST)
+	h.DELETE("/plugin/rbac/user/:id", api.UserDELETE)
+
 	// Gate
 	// h.GET("/gate/config", api.GateConfigGET)
 	// h.PUT("/gate/config", api.GateConfigPUT)
