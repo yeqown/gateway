@@ -51,6 +51,7 @@ type Instance struct {
 	ProxyReverseServers map[string][]rule.ReverseServer `json:"reverse_servers"`
 	Nocache             []rule.Nocacher                 `json:"nocache_rule"`
 	Users               []rule.User                     `json:"users"`
+	URLS                []rule.PermitURL                `json:"urls"`
 }
 
 // Store ... to add, del, query, update config rule ~
@@ -137,7 +138,7 @@ type NocacherManager interface {
 // PermissionManager rule.Permission manage funcs
 type PermissionManager interface {
 	NewPermission(r rule.Permission) error
-	DelPermission(id string) error
+	// DelPermission(id string) error
 	EditPermission(id string, r rule.Permission) error
 	PermissionPage(limit, offset int) ([]rule.Permission, int)
 }
@@ -145,11 +146,11 @@ type PermissionManager interface {
 // RoleManager rule.Role manage funcs
 type RoleManager interface {
 	NewRole(r rule.Role) error
-	DelRole(id string) error
+	// DelRole(id string) error
 	EditRole(id string, r rule.Role) error
 	RolePage(limit, offset int) ([]rule.Role, int)
-	AssignPerm(id string, permids ...string) error
-	RevokePerm(id string, permids ...string) error
+	// AssignPerm(id string, permids ...string) error
+	// RevokePerm(id string, permids ...string) error
 }
 
 // UserManager rule.User manage funcs
@@ -158,8 +159,8 @@ type UserManager interface {
 	DelUser(id string) error
 	EditUser(id string, r rule.User) error
 	UserPage(limit, offset int) ([]rule.User, int)
-	AssignRole(id, roleid string) error
-	RevokeRole(id, roleid string) error
+	// AssignRole(id, roleid string) error
+	// RevokeRole(id, roleid string) error
 }
 
 // PermitURLManager rule.PermitURL manage funcs

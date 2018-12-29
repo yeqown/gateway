@@ -25,10 +25,10 @@ func (s *Store) NewRole(r rule.Role) error {
 }
 
 // DelRole (id string) error
-func (s *Store) DelRole(id string) error {
-	return s.C(plgRbacRoleCollName).
-		RemoveId(bson.ObjectIdHex(id))
-}
+// func (s *Store) DelRole(id string) error {
+// 	return s.C(plgRbacRoleCollName).
+// 		RemoveId(bson.ObjectIdHex(id))
+// }
 
 // EditRole (id string, r rule.Role) error
 func (s *Store) EditRole(id string, r rule.Role) error {
@@ -90,21 +90,21 @@ func (s *Store) GetRoleByID(id string) rule.Role {
 }
 
 // AssignPerm (id, permid string) error
-func (s *Store) AssignPerm(id string, permids ...string) error {
-	doc := s.GetRoleByID(id)
-	for _, permid := range permids {
-		perm := s.GetPermissionByID(permid)
-		doc.Assign(perm)
-	}
-	return s.EditRole(id, doc)
-}
+// func (s *Store) AssignPerm(id string, permids ...string) error {
+// 	doc := s.GetRoleByID(id)
+// 	for _, permid := range permids {
+// 		perm := s.GetPermissionByID(permid)
+// 		doc.Assign(perm)
+// 	}
+// 	return s.EditRole(id, doc)
+// }
 
 // RevokePerm (id, permid string) error
-func (s *Store) RevokePerm(id string, permids ...string) error {
-	doc := s.GetRoleByID(id)
-	for _, permid := range permids {
-		perm := s.GetPermissionByID(permid)
-		doc.Revoke(perm)
-	}
-	return s.EditRole(id, doc)
-}
+// func (s *Store) RevokePerm(id string, permids ...string) error {
+// 	doc := s.GetRoleByID(id)
+// 	for _, permid := range permids {
+// 		perm := s.GetPermissionByID(permid)
+// 		doc.Revoke(perm)
+// 	}
+// 	return s.EditRole(id, doc)
+// }

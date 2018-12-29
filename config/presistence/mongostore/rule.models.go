@@ -224,11 +224,11 @@ func (r *roleModel) Revoke(perm rule.Permission) error {
 func (r *roleModel) Permit(perm rule.Permission) bool {
 	var rslt bool
 	for _, p := range r.permissions {
-		if p.Match(perm) {
-			rslt = true
+		if rslt = p.Match(perm); rslt {
 			break
 		}
 	}
+	// log.Infof("result: %v", rslt)
 	return rslt
 }
 func loadRoleModelFromRole(r rule.Role) *roleModel {

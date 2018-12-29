@@ -96,19 +96,19 @@ func RolePUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) 
 }
 
 // RoleDELETE ...
-func RoleDELETE(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
-	var (
-		resp = new(commonResp)
-	)
-	id := param.ByName("id")
-	if err := Global().DelRole(id); err != nil {
-		ResponseWithError(w, resp, err)
-		return
-	}
+// func RoleDELETE(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
+// 	var (
+// 		resp = new(commonResp)
+// 	)
+// 	id := param.ByName("id")
+// 	if err := Global().DelRole(id); err != nil {
+// 		ResponseWithError(w, resp, err)
+// 		return
+// 	}
 
-	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
-	utils.ResponseJSON(w, resp)
-}
+// 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
+// 	utils.ResponseJSON(w, resp)
+// }
 
 // // RoleAssignPermPOST ...
 // func RoleAssignPermPOST(w http.ResponseWriter, req *http.Request, param httprouter.Params) {

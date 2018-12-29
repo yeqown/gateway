@@ -45,7 +45,7 @@ func main() {
 	plgHTTPLogger := httplog.New(logger.Logger)
 	plgCache := cache.New(presistence.NewInMemoryStore(), cfg.Nocache)
 	plgTokenBucket := ratelimit.New(10, 1)
-	plgRBAC := rbac.New("user_id", cfg.Users)
+	plgRBAC := rbac.New("user_id", cfg.Users, cfg.URLS)
 
 	go func(changedC <-chan configpresistence.ChangedChan) {
 		for {

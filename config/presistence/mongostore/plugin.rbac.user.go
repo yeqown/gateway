@@ -83,17 +83,17 @@ func (s *Store) GetUserByID(id string) rule.User {
 }
 
 // AssignRole (id, roleid string) error
-func (s *Store) AssignRole(id, roleid string) error {
-	doc := s.GetUserByID(id)
-	perm := s.GetRoleByID(roleid)
-	doc.Assign(perm)
-	return s.EditUser(id, doc)
-}
+// func (s *Store) AssignRole(id, roleid string) error {
+// 	doc := s.GetUserByID(id)
+// 	perm := s.GetRoleByID(roleid)
+// 	doc.Assign(perm)
+// 	return s.EditUser(id, doc)
+// }
 
 // RevokeRole (id, roleid string) error
-func (s *Store) RevokeRole(id, roleid string) error {
-	doc := s.GetUserByID(id)
-	perm := s.GetRoleByID(roleid)
-	doc.Revoke(perm)
-	return s.EditUser(id, doc)
-}
+// func (s *Store) RevokeRole(id, roleid string) error {
+// 	doc := s.GetUserByID(id)
+// 	perm := s.GetRoleByID(roleid)
+// 	doc.Revoke(perm)
+// 	return s.EditUser(id, doc)
+// }

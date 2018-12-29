@@ -47,20 +47,20 @@ func PermissionsGET(w http.ResponseWriter, req *http.Request, param httprouter.P
 }
 
 // PermissionDELETE ...
-func PermissionDELETE(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
-	var (
-		resp = new(commonResp)
-	)
+// func PermissionDELETE(w http.ResponseWriter, req *http.Request, param httprouter.Params) {
+// 	var (
+// 		resp = new(commonResp)
+// 	)
 
-	id := param.ByName("id")
-	if err := Global().DelPermission(id); err != nil {
-		ResponseWithError(w, resp, err)
-		return
-	}
+// 	id := param.ByName("id")
+// 	if err := Global().DelPermission(id); err != nil {
+// 		ResponseWithError(w, resp, err)
+// 		return
+// 	}
 
-	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
-	utils.ResponseJSON(w, resp)
-}
+// 	code.FillCodeInfo(resp, code.GetCodeInfo(code.CodeOk))
+// 	utils.ResponseJSON(w, resp)
+// }
 
 // PermissionPUT ...
 func PermissionPUT(w http.ResponseWriter, req *http.Request, param httprouter.Params) {

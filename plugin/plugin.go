@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/yeqown/gateway/utils"
+	"github.com/yeqown/server-common/code"
 )
 
 // PlgStatus ...
@@ -130,7 +131,8 @@ func (c *Context) Error() error {
 // SetError ...
 func (c *Context) SetError(err error) {
 	c.err = err
-	c.String(http.StatusInternalServerError, err.Error())
+	c.JSON(http.StatusInternalServerError,
+		code.NewCodeInfo(code.CodeSystemErr, err.Error()))
 }
 
 // Request ...

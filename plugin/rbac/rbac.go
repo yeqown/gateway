@@ -1,10 +1,12 @@
 package rbac
 
 import (
+	"crypto/md5"
 	"errors"
 	"hash"
 
 	"github.com/yeqown/gateway/config/rule"
+	"github.com/yeqown/gateway/logger"
 	"github.com/yeqown/gateway/plugin"
 )
 
@@ -14,7 +16,7 @@ var (
 )
 
 // New ... only return a RBAC instance, and must load rules manually
-func New(fieldName string, us []rule.User) *RBAC {
+func New(fieldName string, us []rule.User, urls []rule.PermitURL) *RBAC {
 	if fieldName == "" {
 		fieldName = "user_id"
 	}
@@ -22,8 +24,10 @@ func New(fieldName string, us []rule.User) *RBAC {
 		enabled:     true,
 		status:      plugin.Working,
 		userIDField: fieldName,
+		md5er:       md5.New(),
 	}
 	r.LoadUsers(us)
+	r.LoadURLRules(urls)
 	return r
 }
 
@@ -85,12 +89,17 @@ func (r *RBAC) Handle(ctx *plugin.Context) {
 		return
 	}
 
+	logger.Logger.WithFields(map[string]interface{}{
+		"path":    ctx.Path,
+		"field":   r.userIDField,
+		"user_id": ctx.Form.Get(r.userIDField),
+	}).Infof("with permission request passed: %v, %v", permitted, need)
 	ctx.Next()
 }
 
 // Name ...
 func (r *RBAC) Name() string {
-	return "plugin.rabc"
+	return "plugin.rbac"
 }
 
 // Enabled ...
@@ -113,6 +122,7 @@ func (r *RBAC) Enable(enabled bool) {
 }
 
 func (r *RBAC) permit(uri, userID string) (permitted, need bool) {
+	logger.Logger.Infof("permit path: %s, with UserID: %s", uri, userID)
 	hashed := r.hashURI(uri)
 	perm, ex := r.urlHashMap[hashed]
 	if !ex {
@@ -124,23 +134,24 @@ func (r *RBAC) permit(uri, userID string) (permitted, need bool) {
 	need = true
 	if userID == "" {
 		// userID is empty
-		// TODO: support default role
-		permitted = false
-		return
+		// [done] TODO: support default role
+		userID = "default"
 	}
 	user, ok := r.users[userID]
 	if !ok {
 		// missed userID
+		logger.Logger.Errorf("could not found userId: %s", userID)
 		permitted = false
 		return
 	}
 
 	// brute force
 	for _, role := range user.Roles() {
-		if permitted := role.Permit(perm); permitted {
+		if permitted = role.Permit(perm); permitted {
 			break
 		}
 	}
+	logger.Logger.Infof("user: %v has no such permission: %v", userID, perm.ID())
 	return
 }
 

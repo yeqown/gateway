@@ -27,9 +27,9 @@ func (s *Store) NewPermission(r rule.Permission) error {
 }
 
 // DelPermission (id string) error
-func (s *Store) DelPermission(id string) error {
-	return s.C(plgRbacPermCollName).RemoveId(bson.ObjectIdHex(id))
-}
+// func (s *Store) DelPermission(id string) error {
+// 	return s.C(plgRbacPermCollName).RemoveId(bson.ObjectIdHex(id))
+// }
 
 // EditPermission (id string, r rule.Permission) error
 func (s *Store) EditPermission(id string, r rule.Permission) error {

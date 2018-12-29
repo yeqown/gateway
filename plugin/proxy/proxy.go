@@ -3,6 +3,7 @@
 package proxy
 
 import (
+	"github.com/yeqown/server-common/code"
 	"context"
 	"errors"
 	"fmt"
@@ -170,7 +171,8 @@ func (p *Proxy) LoadReverseServer(cfgs map[string][]rule.ReverseServer) {
 
 			// register a func for reverse proxy to handler error
 			reversePorxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-				utils.ResponseString(w, err.Error())
+				utils.ResponseJSON(w, 
+					code.NewCodeInfo(code.CodeSystemErr, err.Error()))
 				return
 			}
 			key := utils.Fstring("%s_%d", groupName, idx)

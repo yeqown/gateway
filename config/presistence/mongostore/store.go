@@ -94,6 +94,40 @@ func (s *Store) loadReverseServerRules() map[string][]rule.ReverseServer {
 	return result
 }
 
+func (s *Store) loadRbacUsers() []rule.User {
+	models := make([]*userModel, 0)
+	if err := s.C(plgRbacUserCollName).
+		Find(nil).All(&models); err != nil {
+		panic(err)
+	}
+	rules := make([]rule.User, len(models))
+	for idx, model := range models {
+		rules[idx] = model
+		model.RolesMap = make(map[string]rule.Role)
+		for _, roleID := range model.RoleIDs {
+			id := roleID.Hex()
+			role := s.GetRoleByID(id)
+			model.RolesMap[id] = role
+		}
+	}
+	return rules
+}
+
+func (s *Store) loadRbacPermitURLs() []rule.PermitURL {
+	models := make([]*permitURLModel, 0)
+	if err := s.C(plgRbacPermURLCollName).
+		Find(nil).All(&models); err != nil {
+		panic(err)
+	}
+	rules := make([]rule.PermitURL, len(models))
+	for idx, model := range models {
+		perm := s.GetPermissionByID(model.PermID.Hex())
+		model.Perm = perm
+		rules[idx] = model
+	}
+	return rules
+}
+
 // Instance ...
 func (s *Store) Instance() *presistence.Instance {
 	return &presistence.Instance{
@@ -101,6 +135,8 @@ func (s *Store) Instance() *presistence.Instance {
 		ProxyPathRules:      s.loadProxyPathRules(),
 		ProxyReverseServers: s.loadReverseServerRules(),
 		Nocache:             s.loadNocacherRules(),
+		Users:               s.loadRbacUsers(),
+		URLS:                s.loadRbacPermitURLs(),
 	}
 }
 
